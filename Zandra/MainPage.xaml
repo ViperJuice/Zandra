@@ -1,0 +1,37 @@
+﻿<Page
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:Zandra"
+      xmlns:System="clr-namespace:System;assembly=mscorlib" x:Class="Zandra.MainPage"
+      mc:Ignorable="d" 
+      d:DesignHeight="808.929" d:DesignWidth="1188.393"
+      Title="Zandra" WindowTitle="Zandra">
+    <Grid HorizontalAlignment="Left" Margin="0,4,0,0" Width="1178">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <DataGrid x:Name="APACSRequestGrid" HorizontalAlignment="Left" VerticalAlignment="Top" SelectionChanged="DataGrid_SelectionChanged" AutoGenerateColumns="False" Height="774">
+            <DataGrid.Columns>
+                <DataGridTextColumn Binding="{Binding Return.Id}" Header="APACS ID" />
+                <DataGridTextColumn Binding="{Binding Return.Aircraft.CallSign}" Header="Callsign" />
+                <DataGridTextColumn Binding="{Binding Return.EarliestEntryDate}" Header="First Entry" />
+                <DataGridTextColumn Binding="{Binding Return.Status}" Header="Status" />
+                <DataGridTextColumn Binding="{Binding Return.Type}" Header="Flight Type" />
+                <DataGridTextColumn Binding="{Binding Return.zandraRecommendation}" Header="Recommendation" />
+                <DataGridTextColumn Binding="{Binding Return.LastModified}" Header="Last Change" />
+                <DataGridTextColumn Binding="{Binding Return.Cargo.NumberOfPassengers}" Header="Passengers" />
+                <DataGridTextColumn Binding="{Binding Return.Cargo.NumberOfPassengersZ}" Header="PassengersZ" /> 
+                <DataGridTextColumn Binding="{Binding Return.Cargo.DistinguishedVisitors}" Header="DV" />
+                <DataGridTextColumn Binding="{Binding Return.Cargo.Discription}" Header="Discription" />
+                <DataGridTextColumn Binding="{Binding Return.Cargo.Hazardous}" Header="Hazardous" />
+                <DataGridTextColumn Binding="{Binding Return.Cargo.HazardousFormatted}" Header="Hazardous Formatted" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <Button x:Name="GetAPACSData" Click = "GetAPACSData_Click" Content="Get APACS Data" Height="20" Margin="482,779,0,0" VerticalAlignment="Top" RenderTransformOrigin="-1.64,0.35" HorizontalAlignment="Left" Width="100.349"/>
+        <Button x:Name="CleanData" Content="Clean Data" Click = "CleanData_Click" HorizontalAlignment="Left" Height="20" Margin="582,779,0,0" VerticalAlignment="Top" Width="100"/>
+        <Button x:Name="Save" Content="Save" HorizontalAlignment="Left" Height="20" Margin="682,779,0,0" VerticalAlignment="Top" Width="100" Click="Save_Click"/>
+        <Button x:Name="Open" Content="Open" HorizontalAlignment="Left" Height="20" Margin="782,779,0,0" VerticalAlignment="Top" Width="100" Click="Open_Click"/>
+    </Grid>
+</Page>
