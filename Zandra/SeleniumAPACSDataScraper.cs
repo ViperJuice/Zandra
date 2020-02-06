@@ -12,6 +12,7 @@ using System.Security.Permissions;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using System.Xml.Serialization;
 
 namespace Zandra
@@ -19,10 +20,11 @@ namespace Zandra
 
     class SeleniumAPACSDataScraper
     {
+        bool cancel = false;
         ZandraUserPreferences userPreferences;
         ObservableCollection<GetAircraftRequestResponse> Requests;
         [XmlArray("APACSRequests")]
-        private BackgroundWorker backgroundworker;
+       // private BackgroundWorker backgroundworker;
         private Window1 progressWindow;
  
         public void ScrapeAPACSRequests(ref ZandraUserPreferences userPreferences,
@@ -31,75 +33,77 @@ namespace Zandra
             this.userPreferences = userPreferences;
             this.Requests = Requests;
             progressWindow = new Window1();
-            backgroundworker = new BackgroundWorker
-            {
-                WorkerReportsProgress = true,
-                WorkerSupportsCancellation = true
-            };
-            backgroundworker.DoWork +=
-                new DoWorkEventHandler(
-                    backgroundworker_DoWork);
-            backgroundworker.RunWorkerCompleted += 
-                new RunWorkerCompletedEventHandler(
-                    backgroundworker_RunWorkerCompleted); 
-            backgroundworker.ProgressChanged +=
-                new ProgressChangedEventHandler(
-                    backgroundworker_ProgressChanged);
+            //backgroundworker = new BackgroundWorker
+            //{
+            //    WorkerReportsProgress = true,
+            //    WorkerSupportsCancellation = true
+            //};
+            //backgroundworker.DoWork +=
+            //    new DoWorkEventHandler(
+            //        backgroundworker_DoWork);
+            //backgroundworker.RunWorkerCompleted += 
+            //    new RunWorkerCompletedEventHandler(
+            //        backgroundworker_RunWorkerCompleted); 
+            //backgroundworker.ProgressChanged +=
+            //    new ProgressChangedEventHandler(
+            //        backgroundworker_ProgressChanged);
             progressWindow.CancelButtonClicked += Cancel;
             progressWindow.Show();
-            backgroundworker.RunWorkerAsync();
+            ScrapeRequests();
+            progressWindow.Close();
+            //backgroundworker.RunWorkerAsync();
         }
         private void Cancel(object sender, EventArgs e)
         {
-            backgroundworker.CancelAsync();
+            cancel = true;
+            //backgroundworker.CancelAsync();
         }
-        private void backgroundworker_DoWork(object sender,
-            DoWorkEventArgs e)
-        {
-            ScrapeRequests(sender, e);
-        }
-        private void backgroundworker_RunWorkerCompleted(
-            object sender, RunWorkerCompletedEventArgs e)
-        {
-            progressWindow.Close();
-            // First, handle the case where an exception was thrown.
-            if (e.Error != null)
-            {
-                MessageBox.Show(e.Error.Message);
-            }
-            else if (e.Cancelled)
-            {
-                //TODO: Handle Canceled
-                // Next, handle the case where the user canceled 
-                // the operation.
-                // Note that due to a race condition in 
-                // the DoWork event handler, the Cancelled
-                // flag may not have been set, even though
-                // CancelAsync was called.
+        //private void backgroundworker_DoWork(object sender,
+        //    DoWorkEventArgs e)
+        //{
+        //    ScrapeRequests(sender, e);
+        //}
+        //private void backgroundworker_RunWorkerCompleted(
+        //    object sender, RunWorkerCompletedEventArgs e)
+        //{
+        //    progressWindow.Close();
+        //    // First, handle the case where an exception was thrown.
+        //    if (e.Error != null)
+        //    {
+        //        MessageBox.Show(e.Error.Message);
+        //    }
+        //    else if (e.Cancelled)
+        //    {
+        //        //TODO: Handle Canceled
+        //        // Next, handle the case where the user canceled 
+        //        // the operation.
+        //        // Note that due to a race condition in 
+        //        // the DoWork event handler, the Cancelled
+        //        // flag may not have been set, even though
+        //        // CancelAsync was called.
 
-            }
-            else
-            {
-                // TODO: Handle Success
-                // Finally, handle the case where the operation 
-                // succeeded.
+        //    }
+        //    else
+        //    {
+        //        // TODO: Handle Success
+        //        // Finally, handle the case where the operation 
+        //        // succeeded.
 
-            }
-        }
-        private void backgroundworker_ProgressChanged(object sender,
-            ProgressChangedEventArgs e)
-        {
-            progressWindow.ProgressBar.Value = e.ProgressPercentage;
-            progressWindow.PercentDone.Text =  e.ProgressPercentage.ToString() + "%";
-        }
+        //    }
+        //}
+        //private void backgroundworker_ProgressChanged(object sender,
+        //    ProgressChangedEventArgs e)
+        //{
+        //    progressWindow.ProgressBar.Value = e.ProgressPercentage;
+        //    progressWindow.PercentDone.Text =  e.ProgressPercentage.ToString() + "%";
+        //}
 
         
-        private void ScrapeRequests(object sender, DoWorkEventArgs e)
+        private void ScrapeRequests()
         {
-
-            
-            BackgroundWorker worker = sender as BackgroundWorker;
+            //BackgroundWorker worker = sender as BackgroundWorker;
             //TODO: Add user login page capability
+            //TODO:Add selenium try catch blocks 
             //Retreive APACS Data Using Selenium
             IWebDriver driver = new ChromeDriver();
             WebDriverWait wait = new WebDriverWait(driver, System.TimeSpan.FromSeconds(60));
@@ -156,22 +160,33 @@ namespace Zandra
             i = 0;
             foreach (string requestNumber in requestNumbers)
             {
-                if (worker.CancellationPending)
+                if (cancel == true)
                 {
-                    e.Cancel = true;
+                    //e.Cancel = true;
                     driver.Close();
+                    MessageBox.Show("APACS  sync was canceled");
                 }
                 else
                 {
-                    URL = userPreferences.APACSRequestDownloadUrl.Replace("######", requestNumber);
-                    System.Net.ServicePointManager.Expect100Continue = true;
-                    System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-                    requestsXML.Add(client.DownloadString(URL));
-                    i++;
-                    worker.ReportProgress(100 * i / requestNumbers.Count());
+                    //split work into seperatly processed chunks to allow progres bbar updatin on UI thread
+                    Application.Current.Dispatcher.Invoke(new Action(delegate ()
+                    {
+                        URL = userPreferences.APACSRequestDownloadUrl.Replace("######", requestNumber);
+                        System.Net.ServicePointManager.Expect100Continue = true;
+                        System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+                        requestsXML.Add(client.DownloadString(URL));
+                        i++;
+                        //worker.ReportProgress(100 * i / requestNumbers.Count());
+                        //ReportProgress(100 * i / requestNumbers.Count())
+                        progressWindow.ProgressBar.Value = 100 * i / requestNumbers.Count();
+                        progressWindow.PercentDone.Text = 100 * i / requestNumbers.Count()
+                            + "% (" + i + "/" + requestNumbers.Count() + " requests)";
+                    }), DispatcherPriority.Background);
                 }
             }
-            driver.Quit();
+            client.Dispose();
+            client = null;
+            driver.Close();
             //Deserialize retrieved APACS Requests into C# GetAircraftRequestResponse objects
             XmlSerializer serializer = new XmlSerializer(typeof(GetAircraftRequestResponse));
             foreach (string requestXML in requestsXML)

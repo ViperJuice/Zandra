@@ -7,6 +7,79 @@ using System.Xml.Serialization;
 
 namespace Zandra
 {
+	public enum AircraftErrors
+	{
+		AIRCRAFT_TYPE_NOT_LISTED,
+		AIRCRAFT_TAIL_NUMBER_NOT_LISTED,
+		UNRECOGNIZED_TAIL_NUMBER_FORMAT
+	}
+	public enum ItineraryErrors
+	{
+		ENTRY_POINT_MISSING,
+		ENTRY_TIME_MISSING,
+		EXIT_POINT_MISSING,
+		EXIT_TIME_MISSING,
+		LAND_POINT_MISSING,
+		LAND_TIME_MISSING,
+		TAKEOFF_POINT_MISSING,
+		TAKEOFF_TIME_MISSING,
+		OVERFLY_WITH_TAKEOFF,
+		OVERFLY_WITH_LANDING,
+		OVERFLY_WITH_ENTRY_MISSING,
+		OVERFLY_WITH_EXIT_MISSING,
+		INVALID_ENTRY_POINT,
+		INVALID_EXIT_POINT,
+		INVALID_LANDING_POINT,
+		INVALID_TAKEOFF_POINT
+	}
+	public enum CargoErrors
+	{
+		CARGO_NOT_LISTED,
+		TOO_MANY_PAX_FOR_AIRCRAFT_TYPE,
+		PAX_LISTED_INCORRECTLY,
+	}
+	public enum ContactErrors
+	{
+		CONTACT_INFORMATION_MISSING,
+		UNRECOGNIZED_CONTACT
+	}
+	public enum CrewErrors
+	{
+		CREW_NUMBERS_LISTED_WRONG,
+		CREW_NATIONALITY_NOT_LISTED,
+		CREW_NOT_LISTED
+	}
+	public enum ReturnErrors
+	{
+		BLANKET_CARGO_REQUIRMENTS_NOT_MET,
+		BLANKET_ROUTE_WITHOUT_BLANKET_CALLSIGN,
+		BLANKET_ROUTE_CRITERIA_NOT_MET,
+		BLANKET_CARGO_CRITERIA_NOT_MET
+	}
+	public enum DAOStatus
+	{
+		RECIEVED,
+		AWAITING_MANUAL_PROCESSING,
+		AWAITING_DIP_CREATION,
+		AWAITING_ROUTE_CREATION,
+		AWAITING_ALL_DOCUMENT_CREATION,
+		AWAITING_DIP_TRANSLATION,
+		AWAITNG_ROUTE_TRANSLATION,
+		AWAITING_ALL_DOCUMENT_TRANSLATION,
+		DIP_SENT_TO_GOV_FOR_APPROVAL,
+		ROUTE_SENT_TO_GOV_FOR_APPROVAL,
+		ALL_DOCUMENTS_SENT_TO_GOV_FOR_APPROVAL,
+		DENIED,
+		APPROVED_WITH_RESTRICTIONS,
+		APPROVED
+	}
+	public enum LegDAOStatus
+	{
+		APPROVED,
+		DENIED,
+		AWAITING_APPROVAL
+	}
+
 	/* 
 	 Licensed under the Apache License, Version 2.0
 
@@ -40,8 +113,10 @@ namespace Zandra
 		public string Notes { get; set; }
 		[XmlElement(ElementName = "tailNumber", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
 		public string TailNumber { get; set; }
-		[XmlAttribute(AttributeName = "type")]
+		[XmlAttribute(AttributeName = "type", Namespace ="Zandra")]
 		public string Type { get; set; }
+		[XmlAttribute(AttributeName = "errors", Namespace = "Zandra")]
+		public List<AircraftErrors> Errors { get; set; }
 	}
 
 	[Serializable()]
@@ -64,8 +139,10 @@ namespace Zandra
 		public string NumberOfPassengers { get; set; }
 		[XmlElement(ElementName = "numberOfPassengersZ", Namespace = "Zandra")]
 		public int NumberOfPassengersZ { get; set; }
-		[XmlAttribute(AttributeName = "type")]
+		[XmlAttribute(AttributeName = "type", Namespace = "Zandra")]
 		public string Type { get; set; }
+		[XmlAttribute(AttributeName = "errors", Namespace = "Zandra")]
+		public List<CargoErrors> Errors { get; set; }
 	}
 
 	[Serializable()]
@@ -94,8 +171,8 @@ namespace Zandra
 		public string Rank { get; set; }
 		[XmlElement(ElementName = "title", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
 		public string Title { get; set; }
-		[XmlAttribute(AttributeName = "type")]
-		public string Type { get; set; }
+		[XmlAttribute(AttributeName = "errors", Namespace = "Zandra")]
+		public List<ContactErrors> Errors { get; set; }
 	}
 
 	[Serializable()]
@@ -120,8 +197,8 @@ namespace Zandra
 		public string NumberOfCrew { get; set; }
 		[XmlElement(ElementName = "numberOfCrewZ", Namespace = "Zandra")]
 		public int NumberOfCrewZ { get; set; }
-		[XmlAttribute(AttributeName = "type")]
-		public string Type { get; set; }
+		[XmlAttribute(AttributeName = "errors", Namespace = "Zandra")]
+		public List<CrewErrors>Errors { get; set; }
 	}
 
 	[Serializable()]
@@ -153,7 +230,7 @@ namespace Zandra
 		[XmlElement(ElementName = "comingFromSameCountry", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
 		public string ComingFromSameCountry { get; set; }
 		[XmlElement(ElementName = "comingFromSameCountryZ", Namespace = "Zandra")]
-		public string ComingFromSameCountryZ { get; set; }
+		public bool ComingFromSameCountryZ { get; set; }
 		[XmlElement(ElementName = "comments", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
 		public string Comments { get; set; }
 		[XmlElement(ElementName = "countryAutoResponse", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
@@ -187,7 +264,7 @@ namespace Zandra
 		[XmlElement(ElementName = "goingToSameCountry", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
 		public string GoingToSameCountry { get; set; }
 		[XmlElement(ElementName = "goingToSameCountryZ", Namespace = "Zandra")]
-		public string GoingToSameCountryZ { get; set; }
+		public bool GoingToSameCountryZ { get; set; }
 		[XmlElement(ElementName = "icaoCode", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
 		public string IcaoCode { get; set; }
 		[XmlElement(ElementName = "id", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
@@ -222,8 +299,12 @@ namespace Zandra
 		public string ValidTo { get; set; }
 		[XmlElement(ElementName = "validToZ", Namespace = "Zandra")]
 		public DateTime? ValidToZ { get; set; }
-		[XmlAttribute(AttributeName = "type")]
+		[XmlAttribute(AttributeName = "type", Namespace = "Zandra")]
 		public string Type { get; set; }
+		[XmlAttribute(AttributeName = "errors", Namespace = "Zandra")]
+		public List<ItineraryErrors> Errors { get; set; }
+		[XmlAttribute(AttributeName = "legDAOStatus", Namespace = "Zandra")]
+		public LegDAOStatus DAOStatus { get; set; }
 	}
 
 	[Serializable()]
@@ -298,14 +379,23 @@ namespace Zandra
 		public string Type { get; set; }
 		[XmlElement(ElementName = "earliestEntryDate", Namespace = "Zandra")]
 		public DateTime? EarliestEntryDate { get; set; }
-		[XmlElement(ElementName = "daoStatus", Namespace = "Zandra")]
-		public string DAOStatus { get; set; }
 		[XmlElement(ElementName = "zandraRecommendation", Namespace = "Zandra")]
-		public string zandraRecommendation { get; set; }
+		public string ZandraRecommendation { get; set; }
+		[XmlElement(ElementName = "zandraRecommendationNote", Namespace = "Zandra")]
+		public string ZandraRecommendationNote { get; set; }
 		[XmlElement(ElementName = "autoApproved", Namespace = "Zandra")]
 		public bool AutoApproved { get; set; }
 		[XmlElement(ElementName = "archived", Namespace = "Zandra")]
 		public bool Archived { get; set; }
+		[XmlElement(ElementName = "goingToSameCountry", Namespace = "Zandra")]
+		public bool GoingToSameCountryZ { get; set; }
+		[XmlElement(ElementName = "comingFromSameCountry", Namespace = "Zandra")]
+		public bool ComingFromSameCountry { get; set; }
+		[XmlAttribute(AttributeName = "errors", Namespace = "Zandra")]
+		public List<ReturnErrors> Errors { get; set; }
+		[XmlAttribute(AttributeName = "DAOStatus", Namespace = "Zandra")]
+		public DAOStatus DAOStatus { get; set; }
+
 	}
 
 	[Serializable()]

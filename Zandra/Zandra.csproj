@@ -43,6 +43,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.JScript" />
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -79,6 +80,8 @@
     </Compile>
     <Compile Include="APACSRequest.cs" />
     <Compile Include="APACSRequests.cs" />
+    <Compile Include="Country.cs" />
+    <Compile Include="Point.cs" />
     <Compile Include="SeleniumAPACSDataScraper.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="DownloadProgress.xaml.cs">

@@ -52,7 +52,6 @@ namespace Zandra
                 try
                 {
                     serializer.Serialize(stringwriter, objectToSerialize);
-
                 }
                 catch (InvalidOperationException e)
                 {

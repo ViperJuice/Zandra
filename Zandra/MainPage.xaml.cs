@@ -66,8 +66,6 @@ namespace Zandra
         {
             if (CurrentRequests != null & Requests != null)
             {
-
-
                 CurrentRequests.CleanRequestData();
                 Requests.CleanRequestData();
                 //Replace more recently modified data with new data

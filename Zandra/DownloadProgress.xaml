@@ -12,7 +12,7 @@
             <ColumnDefinition Width="218*"/>
         </Grid.ColumnDefinitions>
         <ProgressBar x:Name="ProgressBar" HorizontalAlignment="Left" Height="32" Margin="10,10,0,0" VerticalAlignment="Top" Width="433" Grid.ColumnSpan="2" ValueChanged="ProgressBar_ValueChanged"/>
-        <TextBox x:Name="PercentDone" HorizontalAlignment="Center" Height="19" Margin="196,53,177,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="80" TextChanged="textBox_TextChanged" Grid.ColumnSpan="2"/>
+        <TextBox x:Name="PercentDone" HorizontalAlignment="Center" Height="19" Margin="136,53,177,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="140" TextChanged="textBox_TextChanged" Grid.ColumnSpan="2" FontWeight="Bold" BorderBrush="Black"/>
         <Button x:Name="Cancel_Button" Content="Cancel" Grid.Column="1" HorizontalAlignment="Left" Height="21" Margin="118,53,0,0" VerticalAlignment="Top" Width="90" IsCancel="True" Click="Cancel_Button_Click"/>
     </Grid>
 </Window>

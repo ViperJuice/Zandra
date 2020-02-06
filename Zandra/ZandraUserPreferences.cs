@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 namespace Zandra
 {
+   
     /*Class to hold the user preferences for Zandra APACS Clearance App*/
     [Serializable()]
 
@@ -20,6 +21,8 @@ namespace Zandra
         {
             PaxStringToNum = new Dictionary<string, int>();
             CargoStringToStandard = new Dictionary<string, string>();
+            EntryToValidPoint = new Dictionary<string, string>();
+            ValidCargoStatement = new List<string>();
             CrewStringToNum = new Dictionary<string, int>();
             PaxStringToNumKeys = new List<string>(); 
             PaxStringToNumValues = new List<int>();
@@ -27,6 +30,7 @@ namespace Zandra
             CrewStringToNumValues = new List<int>();
             CargoStringToStandardKeys = new List<string>();
             CargoStringToStandardValues = new List<string>();
+            Countries = new List<Country>();
         }
 
         public void SaveMe()
@@ -112,9 +116,10 @@ namespace Zandra
             ArraysToLibrary(me.PaxStringToNumKeys, me.PaxStringToNumValues, me.PaxStringToNum);
             ArraysToLibrary(me.CrewStringToNumKeys, me.CrewStringToNumValues, me.CrewStringToNum);
             ArraysToLibrary(me.CargoStringToStandardKeys, me.CargoStringToStandardValues, me.CargoStringToStandard);
+            ArraysToLibrary(me.EntryToValidPointKeys, me.EntryToValidPointValues, me.EntryToValidPoint);
         }
 
-        private static void ArraysToLibrary<K,V>(List<K> keys, List<V> values, Dictionary<K,V> dict)
+        public static void ArraysToLibrary<K,V>(List<K> keys, List<V> values, Dictionary<K,V> dict)
         {
             if (keys != null & values != null & dict != null)
             {
@@ -144,8 +149,8 @@ namespace Zandra
         public string APACSRequestDownloadUrl { get; set; }
         [XmlElement(ElementName = "userCountry", Namespace ="Zandra")]
         public string UserCountry { get; set; }
-        [XmlElement(ElementName = "userCountryCode", Namespace = "Zandra")]
-        public string UserCountryCode { get; set; }
+        [XmlElement(ElementName = "countries", Namespace = "Zandra")]
+        public List<Country> Countries { get; set; }
 
         //Maps passenger number field to an integer number
         [XmlElement(ElementName = "paxStringToNumKeys", Namespace = "Zandra")]
@@ -170,5 +175,17 @@ namespace Zandra
         public List<string> CargoStringToStandardValues { get; set; }
         [XmlIgnoreAttribute()]
         public Dictionary<string, string> CargoStringToStandard;
+
+        [XmlElement(ElementName = "entryToValidPointKeys", Namespace = "Zandra")]
+        public List<string> EntryToValidPointKeys { get; set; }
+        [XmlElement(ElementName = "entryToValidPointValues", Namespace = "Zandra")]
+        public List<string> EntryToValidPointValues { get; set; }
+        [XmlIgnoreAttribute()]
+        public Dictionary<string, string> EntryToValidPoint;
+
+        [XmlElement(ElementName = "validCargoStatements", Namespace = "Zandra")]
+        public List<string> ValidCargoStatement;
+
+
     }
 }

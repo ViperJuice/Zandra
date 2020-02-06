@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Serialization;
@@ -188,6 +190,56 @@ namespace Zandra
                             leg.ValidTo);
                     }
 
+                    //Set Flight Type
+                    if (leg.CountryName == utilities.userPreferences.UserCountry)
+                    {
+                        if (leg.FlightType == @"TAKE OFF/LAND")
+                        {
+                            Request.Return.Type = @"TAKE OFF/LAND";
+                        }
+                        else if (Request.Return.Type != @"TAKE OFF/LAND" & leg.FlightType == "OVERFLY")
+                        {
+                            Request.Return.Type = "OVERFLY";
+                        }
+                    }
+
+                    //Set Coming From Same CountyFlag
+                    if (leg.ArriveTimeZ != null)
+                    {
+                        leg.ComingFromSameCountryZ = true;
+                    }
+
+                    //Set Going to Same County Flag
+                    if (leg.DepartTimeZ != null)
+                    {
+                        leg.GoingToSameCountryZ = true;
+                    }
+
+                    //Set error entry/exit error flags
+                    if(leg.Type == "OVERFLY" & leg.TakeoffTime != null )
+                    {
+                        leg.Errors.Add(ItineraryErrors.OVERFLY_WITH_TAKEOFF);
+                    }
+                    if (leg.Type == "OVERFLY" & leg.LandingTime != null)
+                    {
+                        leg.Errors.Add(ItineraryErrors.OVERFLY_WITH_LANDING);
+                    }
+
+                    if (leg.Type == "OVERFLY" & leg.LandingTime != null)
+                    {
+                        leg.Errors.Add(ItineraryErrors.OVERFLY_WITH_LANDING);
+                    }
+
+                    if (leg.ArriveTimeZ != null & leg.EntryPoints == null)
+                    {
+                        leg.Errors.Add(ItineraryErrors.ENTRY_POINT_MISSING);
+                    }
+
+                    if (leg.DepartTimeZ != null & leg.ExitPoints == null)
+                    {
+                        leg.Errors.Add(ItineraryErrors.EXIT_POINT_MISSING);
+                    }
+
                     //Find earliest entry to country
                     //TODO deal with in country origin
                     if (leg.CountryName == utilities.userPreferences.UserCountry &
@@ -203,22 +255,52 @@ namespace Zandra
                             Request.Return.EarliestEntryDate = leg.ArriveTimeZ;
                         }
                     }
-
-                    //Set Type
-                    if (leg.CountryName == utilities.userPreferences.UserCountry)
-                    {
-                        if (leg.FlightType == @"TAKE OFF/LAND")
-                        {
-                            Request.Return.Type = @"TAKE OFF/LAND";
-                        }
-                        else if (Request.Return.Type != @"TAKE OFF/LAND" & leg.FlightType == "OVERFLY")
-                        {
-                            Request.Return.Type = "OVERFLY";
-                        }
-                    } 
                 }
 
-                //Map Number of PAX Field to integer
+                //Deal with in country origins
+                List<Itinerary> itins = new List<Itinerary>();
+                List<Itinerary> sortedItins= new List<Itinerary>();
+                //Sort by arrival time Ascending with nulls to the top
+                foreach (Itinerary leg in Request.Return.Itinerary)
+                {
+                    itins.Add(leg);
+                }
+                sortedItins = itins.OrderBy(l => !l.ArriveTimeZ.HasValue)
+                    .ThenBy(l => l.ArriveTime)as List<Itinerary>;
+                //
+                List<Itinerary> inCountryItins = new List<Itinerary>();
+                List<Itinerary> outCountryItins = new List<Itinerary>();
+                DateTime? earliestMissionStartDate = null;
+                foreach (Itinerary leg in sortedItins)
+                {
+                    if (leg.DepartTime !=null & (earliestMissionStartDate > leg.DepartTimeZ 
+                        | earliestMissionStartDate == null))
+                    {
+                        earliestMissionStartDate = leg.ArriveTimeZ;
+                    }
+                    if (leg.TakeoffTimeZ != null & (earliestMissionStartDate > leg.TakeoffTimeZ
+                        | earliestMissionStartDate == null))
+                    {
+                        earliestMissionStartDate = leg.ArriveTimeZ;
+                    }
+                    //Collect all in-country legs
+                    if (leg.ArriveTimeZ != null & leg.CountryName.Trim().ToLower()
+                        == utilities.userPreferences.UserCountry.Trim().ToLower())
+                    {
+                        inCountryItins.Add(leg);
+                    }
+                    //Collect out of country legs
+                    else
+                    {
+                        outCountryItins.Add(leg);
+                    }
+                }
+                foreach (Itinerary leg in inCountryItins)
+                {
+                    
+                }
+
+                //Map Number of PAX field to integer
                 if (Int32.TryParse(Request.Return.Cargo.NumberOfPassengers, out int numValue))
                 {
                     Request.Return.Cargo.NumberOfPassengersZ = numValue;
@@ -265,10 +347,6 @@ namespace Zandra
                     }
                 }
             }
-
         }
-
     }
-
-
 }
