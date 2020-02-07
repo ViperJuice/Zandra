@@ -11,18 +11,31 @@ namespace Zandra
     [XmlRoot(ElementName = "country", Namespace = "Zandra")]
     public class Country
     {
-        private Country() { }
+        private Country() 
+        { 
+            AircraftTailPrefix = new List<string>(); 
+        }
+
         public Country(string name, string code, string citizenNomenclature)
         {
             Name = name;
             Code = code;
             CitizenNomenclature = citizenNomenclature;
+            AircraftTailPrefix = new List<string>();
         }
         public Country(string name, string code, string citizenNomenclature, List<string> acPrefixes)
         {
             Name = name;
             Code = code;
             CitizenNomenclature = citizenNomenclature;
+            if (acPrefixes != null)
+            {
+                AircraftTailPrefix = acPrefixes;
+            }
+            else
+            {
+                AircraftTailPrefix = new List<string>();
+            }
         }
         [XmlElement(ElementName = "code", Namespace = "Zandra")]
         public string Code { get; set; }

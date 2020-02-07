@@ -61,7 +61,7 @@ namespace Zandra
             APACSRequestDownloadUrl = "https://apacs.milcloud.mil/apacs/apacsservlet?cmd=" +
                 "viewAircraftRequestDetail&AR_ID=######&APACS_AREA=AIRCRAFT_APPROVER_LIST&EXPORT" +
                 "_FILE=xml";
-            UserCountry = "Iraq";
+            UserCountryCode = "IRQ";
             if (PaxStringToNumKeys == null) { PaxStringToNumKeys = new List<string>(); }
             if (PaxStringToNumValues == null) { PaxStringToNumValues = new List<int>(); }
             if (CrewStringToNumKeys == null) { CrewStringToNumKeys = new List<string>(); }
@@ -147,8 +147,8 @@ namespace Zandra
         public string APACSRequestListUrl { get; set; }
         [XmlElement(ElementName = "APACSRequestDownloadUrl", Namespace ="Zandra")]
         public string APACSRequestDownloadUrl { get; set; }
-        [XmlElement(ElementName = "userCountry", Namespace ="Zandra")]
-        public string UserCountry { get; set; }
+        [XmlElement(ElementName = "userCountryCode", Namespace ="Zandra")]
+        public string UserCountryCode { get; set; }
         [XmlElement(ElementName = "countries", Namespace = "Zandra")]
         public List<Country> Countries { get; set; }
 

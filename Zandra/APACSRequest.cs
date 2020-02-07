@@ -30,7 +30,13 @@ namespace Zandra
 		INVALID_ENTRY_POINT,
 		INVALID_EXIT_POINT,
 		INVALID_LANDING_POINT,
-		INVALID_TAKEOFF_POINT
+		INVALID_TAKEOFF_POINT,
+		EXIT_BEFOR_ENTRY,
+		TAKEOFF_BEFORE_LAND_INTER_COUNTRY,
+		LAND_BEFORE_TAKEOFF_INTRA_COUNTRY,
+		LAND_BEFORE_ENTRY,
+		EXIT_BEFORE_TAKEOFF,
+		ITINERARY_TIMING_MISSING
 	}
 	public enum CargoErrors
 	{
@@ -115,7 +121,7 @@ namespace Zandra
 		public string TailNumber { get; set; }
 		[XmlAttribute(AttributeName = "type", Namespace ="Zandra")]
 		public string Type { get; set; }
-		[XmlAttribute(AttributeName = "errors", Namespace = "Zandra")]
+		[XmlAttribute(AttributeName = "aircraftErrors", Namespace = "Zandra")]
 		public List<AircraftErrors> Errors { get; set; }
 	}
 
@@ -141,7 +147,7 @@ namespace Zandra
 		public int NumberOfPassengersZ { get; set; }
 		[XmlAttribute(AttributeName = "type", Namespace = "Zandra")]
 		public string Type { get; set; }
-		[XmlAttribute(AttributeName = "errors", Namespace = "Zandra")]
+		[XmlAttribute(AttributeName = "cargoErrors", Namespace = "Zandra")]
 		public List<CargoErrors> Errors { get; set; }
 	}
 
@@ -171,7 +177,7 @@ namespace Zandra
 		public string Rank { get; set; }
 		[XmlElement(ElementName = "title", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
 		public string Title { get; set; }
-		[XmlAttribute(AttributeName = "errors", Namespace = "Zandra")]
+		[XmlAttribute(AttributeName = "contactErrors", Namespace = "Zandra")]
 		public List<ContactErrors> Errors { get; set; }
 	}
 
@@ -197,7 +203,7 @@ namespace Zandra
 		public string NumberOfCrew { get; set; }
 		[XmlElement(ElementName = "numberOfCrewZ", Namespace = "Zandra")]
 		public int NumberOfCrewZ { get; set; }
-		[XmlAttribute(AttributeName = "errors", Namespace = "Zandra")]
+		[XmlAttribute(AttributeName = "crewEerrors", Namespace = "Zandra")]
 		public List<CrewErrors>Errors { get; set; }
 	}
 
@@ -301,7 +307,7 @@ namespace Zandra
 		public DateTime? ValidToZ { get; set; }
 		[XmlAttribute(AttributeName = "type", Namespace = "Zandra")]
 		public string Type { get; set; }
-		[XmlAttribute(AttributeName = "errors", Namespace = "Zandra")]
+		[XmlAttribute(AttributeName = "ItineraryErrors", Namespace = "Zandra")]
 		public List<ItineraryErrors> Errors { get; set; }
 		[XmlAttribute(AttributeName = "legDAOStatus", Namespace = "Zandra")]
 		public LegDAOStatus DAOStatus { get; set; }
@@ -391,7 +397,7 @@ namespace Zandra
 		public bool GoingToSameCountryZ { get; set; }
 		[XmlElement(ElementName = "comingFromSameCountry", Namespace = "Zandra")]
 		public bool ComingFromSameCountry { get; set; }
-		[XmlAttribute(AttributeName = "errors", Namespace = "Zandra")]
+		[XmlAttribute(AttributeName = "ReturnErrors", Namespace = "Zandra")]
 		public List<ReturnErrors> Errors { get; set; }
 		[XmlAttribute(AttributeName = "DAOStatus", Namespace = "Zandra")]
 		public DAOStatus DAOStatus { get; set; }

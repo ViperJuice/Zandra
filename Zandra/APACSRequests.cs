@@ -190,8 +190,8 @@ namespace Zandra
                             leg.ValidTo);
                     }
 
-                    //Set Flight Type
-                    if (leg.CountryName == utilities.userPreferences.UserCountry)
+                    //Set Request Flight Type
+                    if (leg.CountryName == utilities.userPreferences.UserCountryCode)
                     {
                         if (leg.FlightType == @"TAKE OFF/LAND")
                         {
@@ -201,18 +201,6 @@ namespace Zandra
                         {
                             Request.Return.Type = "OVERFLY";
                         }
-                    }
-
-                    //Set Coming From Same CountyFlag
-                    if (leg.ArriveTimeZ != null)
-                    {
-                        leg.ComingFromSameCountryZ = true;
-                    }
-
-                    //Set Going to Same County Flag
-                    if (leg.DepartTimeZ != null)
-                    {
-                        leg.GoingToSameCountryZ = true;
                     }
 
                     //Set error entry/exit error flags
@@ -242,7 +230,7 @@ namespace Zandra
 
                     //Find earliest entry to country
                     //TODO deal with in country origin
-                    if (leg.CountryName == utilities.userPreferences.UserCountry &
+                    if (leg.CountryName == utilities.userPreferences.UserCountryCode &
                         leg.ArriveTimeZ != null)
                     {
                         if (Request.Return.EarliestEntryDate == default(DateTime)
@@ -260,16 +248,167 @@ namespace Zandra
                 //Deal with in country origins
                 List<Itinerary> itins = new List<Itinerary>();
                 List<Itinerary> sortedItins= new List<Itinerary>();
+                List<Itinerary> inCountryItins = new List<Itinerary>();
+                List<Itinerary> inCountryItinsOverfly = new List<Itinerary>();
+                List<Itinerary> inCountryItinsEntryOnly = new List<Itinerary>();
+                List<Itinerary> inCountryItinsExitOnly = new List<Itinerary>();
+                List<Itinerary> inCountryItinsEntryLandExit = new List<Itinerary>();
+                List<Itinerary> inCountryIntraCountry = new List<Itinerary>();
+
                 //Sort by arrival time Ascending with nulls to the top
                 foreach (Itinerary leg in Request.Return.Itinerary)
                 {
-                    itins.Add(leg);
+                    //Collect all in-country legs
+                    if (leg.ArriveTimeZ != null & leg.CountryCode.Trim().ToLower()
+                        == utilities.userPreferences.UserCountryCode.Trim().ToLower())
+                    {
+                        inCountryItins.Add(leg);
+                    }
                 }
+
+                //Sort into leg types
+                foreach (Itinerary leg in Request.Return.Itinerary)
+                {
+                    //Sort Entry Land Exit
+                    if (leg.ArriveTimeZ != null
+                        & leg.LandingTimeZ != null
+                        & leg.TakeoffTimeZ != null
+                        & leg.DepartTimeZ != null)
+                    {
+                        //Set coming/going flags
+                        leg.ComingFromSameCountryZ = false;
+                        leg.GoingToSameCountryZ = true;
+                        //Check Timing
+                        //Check Timing
+                        if (leg.ArriveTimeZ > leg.LandingTimeZ)
+                        {
+                            leg.Errors.Add(ItineraryErrors.LAND_BEFORE_ENTRY);
+                        }
+                        if (leg.TakeoffTimeZ > leg.DepartTimeZ)
+                        {
+                            leg.Errors.Add(ItineraryErrors.EXIT_BEFORE_TAKEOFF);
+                        }
+                        if (leg.TakeoffTimeZ > leg.LandingTimeZ)
+                        {
+                            leg.Errors.Add(ItineraryErrors.TAKEOFF_BEFORE_LAND_INTER_COUNTRY);
+                        }
+
+                    }
+                    //Sort Overfly
+                    else if (leg.ArriveTimeZ != null 
+                        & leg.LandingTimeZ == null 
+                        & leg.TakeoffTimeZ == null 
+                        & leg.DepartTimeZ != null)
+                    {
+                        //Set coming/going flags
+                        leg.ComingFromSameCountryZ = false;
+                        leg.GoingToSameCountryZ = false;
+                        //Check Timing
+                        if(leg.ArriveTimeZ > leg.DepartTimeZ)
+                        {
+                            leg.Errors.Add(ItineraryErrors.EXIT_BEFOR_ENTRY);
+                        }
+                    }
+                    //Sort entry only
+                    else if (leg.ArriveTimeZ != null
+                        & leg.LandingTimeZ != null
+                        & leg.TakeoffTimeZ == null
+                        & leg.DepartTimeZ == null)
+                    {
+                        //Set coming/going flags
+                        leg.ComingFromSameCountryZ = false;
+                        leg.GoingToSameCountryZ = true;
+
+                        //Check Timing
+                        if (leg.ArriveTimeZ > leg.LandingTimeZ)
+                        {
+                            leg.Errors.Add(ItineraryErrors.LAND_BEFORE_ENTRY);
+                        }
+                    }
+                    //Sort exit only
+                    else if (leg.ArriveTimeZ == null
+                        & leg.LandingTimeZ == null
+                        & leg.TakeoffTimeZ != null
+                        & leg.DepartTimeZ != null)
+                    {
+                        //Set coming/going flags
+                        leg.ComingFromSameCountryZ = true;
+                        leg.GoingToSameCountryZ = false;
+
+                        //Check Timing
+                        if (leg.TakeoffTimeZ > leg.DepartTimeZ)
+                        {
+                            leg.Errors.Add(ItineraryErrors.EXIT_BEFORE_TAKEOFF);
+                        }
+                    }
+                    //Sort intra-country
+                    else if (leg.ArriveTimeZ == null
+                        & leg.TakeoffTimeZ != null
+                        & leg.LandingTimeZ != null
+                        & leg.DepartTimeZ == null)
+                    {
+                        //Set coming/going flags
+                        leg.ComingFromSameCountryZ = true;
+                        leg.GoingToSameCountryZ = true;
+                        //Check Timing
+                        if (leg.TakeoffTimeZ > leg.LandingTimeZ)
+                        {
+                            leg.Errors.Add(ItineraryErrors.LAND_BEFORE_TAKEOFF_INTRA_COUNTRY);
+                        }
+                    }
+                    
+
+                    //Sort intra-country then exit
+                    else if (leg.ArriveTimeZ == null
+                        & leg.TakeoffTimeZ != null
+                        & leg.LandingTimeZ != null
+                        & leg.DepartTimeZ != null)
+                    {
+                        //Set coming/going flags
+                        leg.ComingFromSameCountryZ = true;
+                        leg.GoingToSameCountryZ = false;
+                        //Check Timing
+                        if (leg.LandingTimeZ > leg.TakeoffTimeZ)
+                        {
+                            leg.Errors.Add(ItineraryErrors.LAND_BEFORE_TAKEOFF_INTRA_COUNTRY);
+                        }
+                    }
+
+                    //Sort intra-country then exit
+                    else if (leg.ArriveTimeZ != null
+                        & leg.TakeoffTimeZ != null
+                        & leg.LandingTimeZ != null
+                        & leg.DepartTimeZ != null)
+                    {
+                        //Set coming/going flags
+                        leg.ComingFromSameCountryZ = true;
+                        leg.GoingToSameCountryZ = false;
+                        //Check Timing
+                        if (leg.LandingTimeZ > leg.TakeoffTimeZ)
+                        {
+                            leg.Errors.Add(ItineraryErrors.LAND_BEFORE_TAKEOFF_INTRA_COUNTRY);
+                        }
+                    }
+
+
+                    //Sort No Data
+                    else if (leg.ArriveTimeZ == null
+                        & leg.TakeoffTimeZ == null
+                        & leg.LandingTimeZ == null
+                        & leg.DepartTimeZ == null)
+                    {
+                        //Set coming/going flags
+                        leg.ComingFromSameCountryZ = false;
+                        leg.GoingToSameCountryZ = false;
+                        //Check Timing
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIMING_MISSING);
+                    }
+                }
+
                 sortedItins = itins.OrderBy(l => !l.ArriveTimeZ.HasValue)
                     .ThenBy(l => l.ArriveTime)as List<Itinerary>;
                 //
-                List<Itinerary> inCountryItins = new List<Itinerary>();
-                List<Itinerary> outCountryItins = new List<Itinerary>();
+
                 DateTime? earliestMissionStartDate = null;
                 foreach (Itinerary leg in sortedItins)
                 {
