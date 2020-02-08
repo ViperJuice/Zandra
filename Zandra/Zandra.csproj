@@ -80,8 +80,13 @@
     </Compile>
     <Compile Include="APACSRequest.cs" />
     <Compile Include="APACSRequests.cs" />
+    <Compile Include="AircraftZ.cs" />
     <Compile Include="Country.cs" />
+    <Compile Include="CountrySpecifics.cs" />
+    <Compile Include="DipNote.cs" />
+    <Compile Include="GovClearance.cs" />
     <Compile Include="Point.cs" />
+    <Compile Include="Route.cs" />
     <Compile Include="SeleniumAPACSDataScraper.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="DownloadProgress.xaml.cs">
