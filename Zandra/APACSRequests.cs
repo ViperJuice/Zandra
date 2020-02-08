@@ -48,6 +48,10 @@ namespace Zandra
                 {
                     Request.Return.CountrySpecifics = new List<CountrySpecifics>();
                 }
+                else
+                {
+                    Request.Return.CountrySpecifics.Clear();
+                }
             }
         }
 
@@ -57,15 +61,37 @@ namespace Zandra
             ClearErrors();
             foreach (GetAircraftRequestResponse Request in Requests)
             {
+                Initialize();
+                PopulateCountrySpecifics(Request);
                 ParseTextDateTimes(Request);
-                SetReturnTripType(Request);
+                //SetReturnTripType(Request);
                 SetErrorFlagsByLegType(Request);
                 SetContainsInvalidLegFlag(Request);
                 SetItineraryOverlapFlag(Request);
                 FindEarliestReturnDates(Request);
                 ParsePassengerNumbers(Request);
+                ParseCrewNumbers(Request);
+                FlagValidCargoStatemetns(Request);
             }
         }
+
+        private void PopulateCountrySpecifics(GetAircraftRequestResponse Request)
+        {
+            foreach(Itinerary leg in Request.Return.Itinerary)
+            {
+                bool containsCountry = false;
+                foreach(CountrySpecifics specific in Request.Return.CountrySpecifics)
+                {
+                    if(specific.CountryCode == leg.CountryCode) { containsCountry = true; }
+                }
+                if (!containsCountry) 
+                {
+                    Request.Return.CountrySpecifics.Add(
+                        new CountrySpecifics(leg.CountryCode));  
+                }
+            }
+        }
+            
         //Map Number of PAX field to integer
         private void ParsePassengerNumbers(GetAircraftRequestResponse Request)
         {
@@ -92,6 +118,53 @@ namespace Zandra
             }
             //resolve pax number
         }
+
+        //Map Number of PAX field to integer
+        private void ParseCrewNumbers(GetAircraftRequestResponse Request)
+        {
+            if (Int32.TryParse(Request.Return.Crew.NumberOfCrew, out int numValue))
+            {
+                Request.Return.Crew.NumberOfCrewZ = numValue;
+            }
+            else
+            {
+                if (utilities.userPreferences.CrewStringToNum.TryGetValue
+                    (Request.Return.Crew.NumberOfCrew.ToLower().Trim(), out int crew))
+                {
+                    Request.Return.Crew.NumberOfCrewZ = crew;
+                }
+                else if (Request.Return.Crew.NumberOfCrew.ToLower().Trim() == null)
+                {
+                    Request.Return.Crew.NumberOfCrewZ = 0;
+                }
+                else
+                {
+                    //Set flag to ask for user input to resolve passenger number
+                    Request.Return.Crew.NumberOfCrewZ = -1;
+                }
+            }
+        }
+
+        private void FlagValidCargoStatemetns(GetAircraftRequestResponse Request)
+        {
+            if (utilities.userPreferences.CargoStringToStandard.TryGetValue
+                     (Request.Return.Crew.NumberOfCrew.ToLower().Trim(), out CargoDetail cargoDetail))
+            {
+                foreach (CountrySpecifics specific in Request.Return.CountrySpecifics)
+                {
+                    if(specific.CountryCode == utilities.userPreferences.UserCountryCode)
+                    {
+                        specific.CargoDetail = cargoDetail;
+                    }
+                }
+            }
+            else
+            {
+                //Set flag to ask for user input to resolve cargo details
+                Request.Return.Crew.NumberOfCrewZ = -1;
+            }
+        }
+
         private void SetItineraryOverlapFlag(GetAircraftRequestResponse Request)
         {
             foreach (Itinerary leg in Request.Return.Itinerary)
@@ -150,7 +223,6 @@ namespace Zandra
                 }
                 if (invalidItin) { break; }
             }
-
         }
 
         //Function to find earliest itinerary time with null value returned ifg all null
@@ -209,7 +281,7 @@ namespace Zandra
             return earliest;
         }
 
-        //Function to find latest itinerary time with null value returned ifg all null
+        //Function to find latest itinerary time with null value returned if all null
         public DateTime? FindLatestItineraryTime(Itinerary leg)
         {
             DateTime? lastest = null;
@@ -297,6 +369,7 @@ namespace Zandra
             }
             return latest;
         }
+
         public void ParseTextDateTimes(GetAircraftRequestResponse Request)
         {
             //Convert date strings to DateTime Objects
@@ -445,27 +518,27 @@ namespace Zandra
 
             }
         }
-        public void SetReturnTripType(GetAircraftRequestResponse Request)
-        {
-            foreach (Itinerary leg in Request.Return.Itinerary)
-            {
-                foreach(CountrySpecifics specific in Request.Return.CountrySpecifics)
-                {
-                    //Set Request Flight Type
-                    if (leg.CountryName == specific.CountryCode)
-                    {
-                        if (leg.FlightType == @"TAKE OFF/LAND")
-                        {
-                            specific.Type = @"TAKE OFF/LAND";
-                        }
-                        else if (specific.Type != @"TAKE OFF/LAND" & leg.FlightType == "OVERFLY")
-                        {
-                            specific.Type = "OVERFLY";
-                        }
-                    }
-                }
-            }
-        }
+        //public void SetReturnTripType(GetAircraftRequestResponse Request)
+        //{
+        //    foreach (Itinerary leg in Request.Return.Itinerary)
+        //    {
+        //        foreach(CountrySpecifics specific in Request.Return.CountrySpecifics)
+        //        {
+        //            //Set Request Flight Type
+        //            if (leg.CountryName == specific.CountryCode)
+        //            {
+        //                if (leg.FlightType == @"TAKE OFF/LAND")
+        //                {
+        //                    specific.Type = @"TAKE OFF/LAND";
+        //                }
+        //                else if (specific.Type != @"TAKE OFF/LAND" & leg.FlightType == "OVERFLY")
+        //                {
+        //                    specific.Type = "OVERFLY";
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
 
         public void SetErrorFlagsByLegType(GetAircraftRequestResponse Request)
         {
@@ -804,10 +877,34 @@ namespace Zandra
                             Request.Return.Cargo.NumberOfPassengersZ = pax;
                             MessageBoxResult result = MessageBox.Show("Do you want permenently map \n\""
                                + Request.Return.Cargo.NumberOfPassengers + "\" to " +
-                                pax + "?", "Confirmation", MessageBoxButton.YesNo);
+                                pax + "?", "Pax # Map Confirmation", MessageBoxButton.YesNo);
                             if (result == MessageBoxResult.Yes)
                             {
                                 utilities.userPreferences.PaxStringToNum.Add(Request.Return.Cargo.NumberOfPassengers.ToLower().Trim(), pax);
+                                utilities.userPreferences.SaveMe();
+                            }
+                        }
+                    }
+                }
+                //resolve crew number
+                if (Request.Return.Crew.NumberOfCrewZ == -1)
+                {
+                    bool goodNumber = false;
+                    while (!goodNumber)
+                    {
+                        string input = Interaction.InputBox("How many crew are represented by \n\""
+                        + Request.Return.Crew.NumberOfCrew + "\"",
+                        "Resolve Passenger Number", "Default", -1, -1);
+                        goodNumber = Int32.TryParse(input.ToLower().Trim(), out int pax);
+                        if (goodNumber)
+                        {
+                            Request.Return.Crew.NumberOfCrewZ = pax;
+                            MessageBoxResult result = MessageBox.Show("Do you want permenently map \n\""
+                               + Request.Return.Crew.NumberOfCrew + "\" to " +
+                                pax + "?", "Crew # Map Confirmation", MessageBoxButton.YesNo);
+                            if (result == MessageBoxResult.Yes)
+                            {
+                                utilities.userPreferences.CrewStringToNum.Add(Request.Return.Crew.NumberOfCrew.ToLower().Trim(), pax);
                                 utilities.userPreferences.SaveMe();
                             }
                         }

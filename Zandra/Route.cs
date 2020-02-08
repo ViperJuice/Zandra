@@ -11,13 +11,8 @@ namespace Zandra
     [XmlRoot(ElementName = "route", Namespace = "Zandra")]
     class Route
     {
-        [XmlElement(ElementName = "points", Namespace = "Zandra")]
-        List<Point> Points { get; set; }
-        [XmlElement(ElementName = "arriveDepartTimes", Namespace = "Zandra")]
-        List<DateTime?[]> ArriveDeparTimes { get; set; }
-        [XmlIgnore()]
-        Dictionary<Point, DateTime?[]> Itinerary { get; set; }
-
+        [XmlElement(ElementName = "routePoints", Namespace = "Zandra")]
+        List<RoutePoint> RoutePoints { get; set; }
         [XmlElement(ElementName = "validFrom", Namespace = "Zandra")]
         DateTime? ValidFrom { get; set; }
         [XmlElement(ElementName = "validTo", Namespace = "Zandra")]

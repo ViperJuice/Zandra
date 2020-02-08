@@ -104,7 +104,6 @@ namespace Zandra
 		INTRA_COUNTRY,
 		INTER_FRONT_AND_BACK_END,
 		UNKNOWN_CONTAINS_INVALID_ITINERARY
-
 	}
 	public enum FlightType
 	{
@@ -118,6 +117,16 @@ namespace Zandra
 		INVALID_ITINERARY
 	}
 
+	public enum CargoStatus
+	{
+		STANDARD_CARGO,
+		STANDARD_MAIL,
+		STANDARD_FOOD,
+		HAZARDOUS,
+		RESTRICTED_ITEMS,
+		DISSAPROVED_ITEMS,
+		REQUIRES_TRANSLATION
+	}
 	/* 
 	 Licensed under the Apache License, Version 2.0
 
@@ -181,6 +190,7 @@ namespace Zandra
 		public string Type { get; set; }
 		[XmlAttribute(AttributeName = "cargoErrors", Namespace = "Zandra")]
 		public List<CargoErrors> Errors { get; set; }
+
 	}
 
 	[Serializable()]

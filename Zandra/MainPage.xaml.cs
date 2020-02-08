@@ -55,10 +55,19 @@ namespace Zandra
             APACSRequestGrid.Items.Refresh();
         }
 
-        private void GetCurrentequests()
+        private void GetCurrentRequests()
         {
             CurrentRequests.GetAPACSRequests();
-            APACSRequestGrid.ItemsSource = Requests.Requests;
+            MergeRequestData();
+            if(MessageBox.Show("Recommend User Data Cleanup.\n" +
+                "Would you like to begin this now?\n" +
+                "Failure to do this will result in a\n" +
+                "a larger number of manually handled\n" +
+                "requests.","User Data Cleanup?",MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                Requests.UserDataCleanUp();
+            }
+            APACSRequestGrid.ItemsSource = Requests.Requests; 
             APACSRequestGrid.Items.Refresh();
         }
 
@@ -86,8 +95,7 @@ namespace Zandra
 
         private void GetAPACSData_Click(object sender, RoutedEventArgs e)
         {
-            GetCurrentequests();
-            MergeRequestData();
+            GetCurrentRequests();
             APACSRequestGrid.ItemsSource = Requests.Requests;
             APACSRequestGrid.Items.Refresh();
         }
@@ -109,7 +117,7 @@ namespace Zandra
         {
             LoadStoredRequests();
         }
-            
+          
         private void Save_Click(object sender, RoutedEventArgs e)
         {
             if (Requests != null)

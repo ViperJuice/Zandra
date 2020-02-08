@@ -16,6 +16,13 @@ namespace Zandra
             AircraftTailPrefix = new List<string>(); 
         }
 
+        public Country(string name, string code)
+        {
+            Name = name;
+            Code = code;
+            AircraftTailPrefix = new List<string>();
+        }
+
         public Country(string name, string code, string citizenNomenclature)
         {
             Name = name;

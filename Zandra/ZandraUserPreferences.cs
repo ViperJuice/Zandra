@@ -20,7 +20,7 @@ namespace Zandra
         private ZandraUserPreferences()
         {
             PaxStringToNum = new Dictionary<string, int>();
-            CargoStringToStandard = new Dictionary<string, string>();
+            CargoStringToStandard = new Dictionary<string, CargoDetail>();
             EntryToValidPoint = new Dictionary<string, string>();
             ValidCargoStatement = new List<string>();
             CrewStringToNum = new Dictionary<string, int>();
@@ -29,7 +29,7 @@ namespace Zandra
             CrewStringToNumKeys = new List<string>();
             CrewStringToNumValues = new List<int>();
             CargoStringToStandardKeys = new List<string>();
-            CargoStringToStandardValues = new List<string>();
+            CargoStringToStandardValues = new List<CargoDetail>();
             Countries = new List<Country>();
         }
 
@@ -70,8 +70,10 @@ namespace Zandra
             if (PaxStringToNumValues == null) { PaxStringToNumValues = new List<int>(); }
             if (CrewStringToNumKeys == null) { CrewStringToNumKeys = new List<string>(); }
             if (CrewStringToNumValues == null) { CrewStringToNumValues = new List<int>(); }
+            if (CargoStringToStandard == null) { CargoStringToStandard = new Dictionary<string, CargoDetail>(); }
+            if (CrewStringToNum == null) { PaxStringToNum = new Dictionary<string, int>(); }
             if (CargoStringToStandardKeys == null) { CargoStringToStandardKeys = new List<string>(); }
-            if (CargoStringToStandardValues == null) { CargoStringToStandardValues = new List<string>(); }
+            if (CargoStringToStandardValues == null) { CargoStringToStandardValues = new List<CargoDetail>(); }
             PaxStringToNum = new Dictionary<string, int>()
             {
                 {"",0},
@@ -110,7 +112,7 @@ namespace Zandra
             if (CargoStringToStandardKeys == null) {CargoStringToStandardKeys = new List<string>(); }
             CargoStringToStandardKeys.Clear();
             CargoStringToStandardKeys=CargoStringToStandard.Keys.ToList(); 
-            if (CargoStringToStandardValues == null) { CargoStringToStandardValues = new List<string>(); }
+            if (CargoStringToStandardValues == null) { CargoStringToStandardValues = new List<CargoDetail>(); }
             CargoStringToStandardValues.Clear();
             CargoStringToStandardValues = CargoStringToStandard.Values.ToList();
         }
@@ -176,9 +178,9 @@ namespace Zandra
         [XmlElement(ElementName = "cargoStringToStandardKeys", Namespace = "Zandra")]
         public List<string> CargoStringToStandardKeys { get; set; }
         [XmlElement(ElementName = "cargoStringToStandardValues", Namespace = "Zandra")]
-        public List<string> CargoStringToStandardValues { get; set; }
-        [XmlIgnoreAttribute()]
-        public Dictionary<string, string> CargoStringToStandard;
+        public List<CargoDetail> CargoStringToStandardValues { get; set; }
+        [XmlElement(ElementName = "cargoStringToStandard", Namespace = "Zandra")]
+        public Dictionary<string, CargoDetail> CargoStringToStandard;
 
         [XmlElement(ElementName = "entryToValidPointKeys", Namespace = "Zandra")]
         public List<string> EntryToValidPointKeys { get; set; }

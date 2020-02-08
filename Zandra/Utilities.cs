@@ -84,6 +84,7 @@ namespace Zandra
             catch (System.IO.FileNotFoundException ex)
             {
                 return false;
+                throw (ex);
             }
             catch (System.IO.DirectoryNotFoundException ex)
             {
