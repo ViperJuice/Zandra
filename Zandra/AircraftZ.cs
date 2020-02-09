@@ -11,6 +11,7 @@ namespace Zandra
     [XmlRoot(ElementName = "route", Namespace = "Zandra")]
     public class AircraftZ
     {
+        private AircraftZ() { }
         public AircraftZ(string type, uint maxPax, bool military)
         {
             Type = type;

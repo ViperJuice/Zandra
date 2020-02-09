@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,14 +14,14 @@ namespace Zandra
     {
         private Country() 
         { 
-            AircraftTailPrefix = new List<string>(); 
+            AircraftTailPrefix = new ObservableCollection<string>(); 
         }
 
         public Country(string name, string code)
         {
             Name = name;
             Code = code;
-            AircraftTailPrefix = new List<string>();
+            AircraftTailPrefix = new ObservableCollection<string>();
         }
 
         public Country(string name, string code, string citizenNomenclature)
@@ -28,9 +29,9 @@ namespace Zandra
             Name = name;
             Code = code;
             CitizenNomenclature = citizenNomenclature;
-            AircraftTailPrefix = new List<string>();
+            AircraftTailPrefix = new ObservableCollection<string>();
         }
-        public Country(string name, string code, string citizenNomenclature, List<string> acPrefixes)
+        public Country(string name, string code, string citizenNomenclature, ObservableCollection<string> acPrefixes)
         {
             Name = name;
             Code = code;
@@ -41,7 +42,7 @@ namespace Zandra
             }
             else
             {
-                AircraftTailPrefix = new List<string>();
+                AircraftTailPrefix = new ObservableCollection<string>();
             }
         }
         [XmlElement(ElementName = "code", Namespace = "Zandra")]
@@ -49,7 +50,7 @@ namespace Zandra
         [XmlElement(ElementName = "name", Namespace = "Zandra")]
         public string Name { get; set; }
         [XmlElement(ElementName = "aircraftTailPrefix", Namespace = "Zandra")]
-        public List<string> AircraftTailPrefix { get; set; }
+        public ObservableCollection<string> AircraftTailPrefix { get; set; }
         [XmlElement(ElementName = "citizenNomenclature", Namespace = "Zandra")]
         public string CitizenNomenclature { get; set; }
 

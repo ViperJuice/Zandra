@@ -106,11 +106,21 @@ namespace Zandra
             //TODO:Add selenium try catch blocks 
             //Retreive APACS Data Using Selenium
             IWebDriver driver = new ChromeDriver();
-            WebDriverWait wait = new WebDriverWait(driver, System.TimeSpan.FromSeconds(60));
-            _ = driver.Manage().Timeouts().ImplicitWait;
+            WebDriverWait wait = new WebDriverWait(driver, System.TimeSpan.FromSeconds(120));
+            //_ = driver.Manage().Timeouts().ImplicitWait;
             driver.Url = userPreferences.APACSLoginUrl;
-            driver.Navigate().GoToUrl(userPreferences.APACSLoginUrl);
-
+            try
+            {
+                driver.Navigate().GoToUrl(userPreferences.APACSLoginUrl);
+            }
+            catch (OpenQA.Selenium.WebDriverException e)
+            {
+                MessageBox.Show("Unable to download APACS Data\n" +
+                    "Please try again late.\n" +
+                    e.Message);
+                driver.Close();
+                return;
+            }
             //Ack Govt IT System
             IWebElement element = driver.FindElement(By.XPath("//*[@id='ACKNOWLEDGE_RESPONSE']"));
             element.Click();
@@ -126,7 +136,7 @@ namespace Zandra
             element = driver.FindElement(By.XPath("//*[@id='submit']"));
             element.Click();
             driver.Navigate().GoToUrl(userPreferences.APACSRequestListUrl + "1");
-            List<string> requestNumbers = new List<string>();
+            ObservableCollection<string> requestNumbers = new ObservableCollection<string>();
 
             /*Scrape Active APACS Request IDs: The layout must be configured as follows
             Earliest Upcoming Travel Date / ID / Aircraft Call Sign(S) / Request Status / Flight Type / Itinerary ICAO*/
@@ -156,7 +166,7 @@ namespace Zandra
 
             /*Iterate through list of APACS ID Numbers and retrieve XML requests discription using WebClient
             and add XML request to list*/
-            List<string> requestsXML = new List<string>();
+            ObservableCollection<string> requestsXML = new ObservableCollection<string>();
             i = 0;
             foreach (string requestNumber in requestNumbers)
             {

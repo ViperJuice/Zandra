@@ -50,7 +50,7 @@ namespace Zandra
                 MessageBox.Show("It Appears there is no saved APACS data\n" +
                     "Load data from APCS online.");
             }
-            Requests.Initialize(ref utilities); //Initize variables for restored utilities instance
+            Requests.Initialize(ref utilities); //Initilize variables for restored utilities instance
             APACSRequestGrid.ItemsSource = Requests.Requests;
             APACSRequestGrid.Items.Refresh();
         }
@@ -124,6 +124,11 @@ namespace Zandra
             {
                 Utilities.SaveToXml(Requests, System.IO.Path.GetFullPath(@".\APACSRequests.xml"));
             }
+        }
+
+        private void Debug_Click(object sender, RoutedEventArgs e)
+        {
+            utilities.userPreferences.SaveMe();
         }
     }
 }

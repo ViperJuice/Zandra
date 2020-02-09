@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,7 +12,7 @@ namespace Zandra
     [XmlRoot(ElementName = "routePoint", Namespace = "Zandra")]
     class RoutePoint
     {
-        List<RoutePoint> Points { get; set; }
+        ObservableCollection<RoutePoint> Points { get; set; }
         [XmlElement(ElementName = "arriveTime", Namespace = "Zandra")]
         DateTime? ArriveTime { get; set; }
         [XmlElement(ElementName = "departTime", Namespace = "Zandra")]

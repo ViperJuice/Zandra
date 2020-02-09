@@ -11,14 +11,14 @@ namespace Zandra
     [XmlRoot(ElementName = "cargoDetail", Namespace = "Zandra")]
     public class CargoDetail
     {
-        [XmlAttribute(AttributeName = "description", Namespace = "Zandra")]
+        [XmlElement(ElementName = "description", Namespace = "Zandra")]
         public string Description { get; set; }
         //Weight In Kilograms
-        [XmlAttribute(AttributeName = "weight", Namespace = "Zandra")]
+        [XmlElement(ElementName = "weight", Namespace = "Zandra")]
         public uint Weight { get; set; }
-        [XmlAttribute(AttributeName = "pallets", Namespace = "Zandra")]
+        [XmlElement(ElementName = "pallets", Namespace = "Zandra")]
         public uint Pallets { get; set; }
-        [XmlAttribute(AttributeName = "catagory", Namespace = "Zandra")]
+        [XmlElement(ElementName = "catagory", Namespace = "Zandra")]
         public CargoStatus Catagory { get; set; }
     }
 

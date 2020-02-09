@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,10 +10,15 @@ namespace Zandra
 {
     [Serializable()]
     [XmlRoot(ElementName = "route", Namespace = "Zandra")]
-    class Route
-    {
+    public class Route 
+    { 
+        public Route()
+        {
+            RoutePoints = new ObservableCollection<RoutePoint>();
+            ApprovalNumbers = new ObservableCollection<string>();
+        }
         [XmlElement(ElementName = "routePoints", Namespace = "Zandra")]
-        List<RoutePoint> RoutePoints { get; set; }
+        ObservableCollection<RoutePoint> RoutePoints { get; set; }
         [XmlElement(ElementName = "validFrom", Namespace = "Zandra")]
         DateTime? ValidFrom { get; set; }
         [XmlElement(ElementName = "validTo", Namespace = "Zandra")]
@@ -22,6 +28,6 @@ namespace Zandra
         [XmlElement(ElementName = "approved", Namespace = "Zandra")]
         bool Approved { get; set; }
         [XmlElement(ElementName = "approvalNumber", Namespace = "Zandra")]
-        List<string> ApprovalNumbers{ get; set; }
+        ObservableCollection<string> ApprovalNumbers{ get; set; }
     }
 }

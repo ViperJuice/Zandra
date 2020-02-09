@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -21,16 +22,16 @@ namespace Zandra
         {
             PaxStringToNum = new Dictionary<string, int>();
             CargoStringToStandard = new Dictionary<string, CargoDetail>();
-            EntryToValidPoint = new Dictionary<string, string>();
-            ValidCargoStatement = new List<string>();
+            EntryToValidPoint = new Dictionary<string, Point>();
+            //ValidCargoStatement = new ObservableCollection<string>();
             CrewStringToNum = new Dictionary<string, int>();
-            PaxStringToNumKeys = new List<string>(); 
-            PaxStringToNumValues = new List<int>();
-            CrewStringToNumKeys = new List<string>();
-            CrewStringToNumValues = new List<int>();
-            CargoStringToStandardKeys = new List<string>();
-            CargoStringToStandardValues = new List<CargoDetail>();
-            Countries = new List<Country>();
+            PaxStringToNumKeys = new ObservableCollection<string>(); 
+            PaxStringToNumValues = new ObservableCollection<int>();
+            CrewStringToNumKeys = new ObservableCollection<string>();
+            CrewStringToNumValues = new ObservableCollection<int>();
+            CargoStringToStandardKeys = new ObservableCollection<string>();
+            CargoStringToStandardValues = new ObservableCollection<CargoDetail>();
+            Countries = new ObservableCollection<Country>();
         }
 
         public void SaveMe()
@@ -44,6 +45,18 @@ namespace Zandra
             {
                 AfterDeserialize(ref me);
             }
+        }
+        public void AddPoint(Point point)
+        {
+            ObservableCollection<Country> countriesMinus =
+                           new ObservableCollection<Country>(utilities.userPreferences.Countries
+                           .Except(point.BorderingCountries)); ;
+            PointDisplay pointDisplay = new PointDisplay(utilities.userPreferences);
+            Point newPoint = new Point();
+            pointDisplay.DataContext = newPoint;
+            pointDisplay.BorderingCountriesGrid.ItemsSource = newPoint.BorderingCountries;
+            pointDisplay.CountriesGrid.ItemsSource = countriesMinus;
+            pointDisplay.Show();
         }
         public ZandraUserPreferences(Utilities utils)
         {
@@ -66,14 +79,14 @@ namespace Zandra
                 "viewAircraftRequestDetail&AR_ID=######&APACS_AREA=AIRCRAFT_APPROVER_LIST&EXPORT" +
                 "_FILE=xml";
             UserCountryCode = "IRQ";
-            if (PaxStringToNumKeys == null) { PaxStringToNumKeys = new List<string>(); }
-            if (PaxStringToNumValues == null) { PaxStringToNumValues = new List<int>(); }
-            if (CrewStringToNumKeys == null) { CrewStringToNumKeys = new List<string>(); }
-            if (CrewStringToNumValues == null) { CrewStringToNumValues = new List<int>(); }
+            if (PaxStringToNumKeys == null) { PaxStringToNumKeys = new ObservableCollection<string>(); }
+            if (PaxStringToNumValues == null) { PaxStringToNumValues = new ObservableCollection<int>(); }
+            if (CrewStringToNumKeys == null) { CrewStringToNumKeys = new ObservableCollection<string>(); }
+            if (CrewStringToNumValues == null) { CrewStringToNumValues = new ObservableCollection<int>(); }
             if (CargoStringToStandard == null) { CargoStringToStandard = new Dictionary<string, CargoDetail>(); }
             if (CrewStringToNum == null) { PaxStringToNum = new Dictionary<string, int>(); }
-            if (CargoStringToStandardKeys == null) { CargoStringToStandardKeys = new List<string>(); }
-            if (CargoStringToStandardValues == null) { CargoStringToStandardValues = new List<CargoDetail>(); }
+            if (CargoStringToStandardKeys == null) { CargoStringToStandardKeys = new ObservableCollection<string>(); }
+            if (CargoStringToStandardValues == null) { CargoStringToStandardValues = new ObservableCollection<CargoDetail>(); }
             PaxStringToNum = new Dictionary<string, int>()
             {
                 {"",0},
@@ -97,24 +110,18 @@ namespace Zandra
 
         private void BeforeSerialize()
         {
-            if (PaxStringToNumKeys == null) { PaxStringToNumKeys = new List<string>(); }
-            PaxStringToNumKeys.Clear();
-            PaxStringToNumKeys = PaxStringToNum.Keys.ToList();
-            if (PaxStringToNumValues == null) { PaxStringToNumValues = new List<int>(); }
-            PaxStringToNumValues.Clear();
-            PaxStringToNumValues = PaxStringToNum.Values.ToList();
-            if (CrewStringToNumKeys == null) { CrewStringToNumKeys = new List<string>(); }
-            CrewStringToNumKeys.Clear();
-            CrewStringToNumKeys = CrewStringToNum.Keys.ToList();
-            if (CrewStringToNumValues == null) { CrewStringToNumValues = new List<int>(); }
-            CrewStringToNumValues.Clear();
-            CrewStringToNumValues = CrewStringToNum.Values.ToList();
-            if (CargoStringToStandardKeys == null) {CargoStringToStandardKeys = new List<string>(); }
-            CargoStringToStandardKeys.Clear();
-            CargoStringToStandardKeys=CargoStringToStandard.Keys.ToList(); 
-            if (CargoStringToStandardValues == null) { CargoStringToStandardValues = new List<CargoDetail>(); }
-            CargoStringToStandardValues.Clear();
-            CargoStringToStandardValues = CargoStringToStandard.Values.ToList();
+            PaxStringToNumKeys = new ObservableCollection<string>(PaxStringToNum.Keys.ToList());
+            PaxStringToNumValues = new ObservableCollection<int>(PaxStringToNum.Values.ToList()); 
+
+            CrewStringToNumKeys = new ObservableCollection<string>(CrewStringToNum.Keys.ToList()); 
+            CrewStringToNumValues = new ObservableCollection<int>(CrewStringToNum.Values.ToList()); 
+
+            CargoStringToStandardKeys = new ObservableCollection<string>(CargoStringToStandard.Keys.ToList()); 
+            CargoStringToStandardValues = new ObservableCollection<CargoDetail>(CargoStringToStandard.Values.ToList()); 
+
+            EntryToValidPointKeys = new ObservableCollection<string>(EntryToValidPoint.Keys.ToList());
+            EntryToValidPointValues = new ObservableCollection<Point>(EntryToValidPoint.Values.ToList()); 
+
         }
 
         private void AfterDeserialize(ref ZandraUserPreferences me)
@@ -125,7 +132,7 @@ namespace Zandra
             ArraysToLibrary(me.EntryToValidPointKeys, me.EntryToValidPointValues, me.EntryToValidPoint);
         }
 
-        public static void ArraysToLibrary<K,V>(List<K> keys, List<V> values, Dictionary<K,V> dict)
+        public static void ArraysToLibrary<K,V>(ObservableCollection<K> keys, ObservableCollection<V> values, Dictionary<K,V> dict)
         {
             if (keys != null & values != null & dict != null)
             {
@@ -156,41 +163,41 @@ namespace Zandra
         [XmlElement(ElementName = "userCountryCode", Namespace ="Zandra")]
         public string UserCountryCode { get; set; }
         [XmlElement(ElementName = "countries", Namespace = "Zandra")]
-        public List<Country> Countries { get; set; }
+        public ObservableCollection<Country> Countries { get; set; }
 
         //Maps passenger number field to an integer number
         [XmlElement(ElementName = "paxStringToNumKeys", Namespace = "Zandra")]
-        public List<string> PaxStringToNumKeys { get; set; }
+        public ObservableCollection<string> PaxStringToNumKeys { get; set; }
         [XmlElement(ElementName = "paxStringToNumValues", Namespace = "Zandra")]
-        public List<int> PaxStringToNumValues { get; set; }
+        public ObservableCollection<int> PaxStringToNumValues { get; set; }
         [XmlIgnoreAttribute()]
         public Dictionary<string, int> PaxStringToNum;
 
         //Maps passenger number field to an integer number
         [XmlElement(ElementName = "crewStringToNumKeys", Namespace = "Zandra")]
-        public List<string> CrewStringToNumKeys { get; set; }
+        public ObservableCollection<string> CrewStringToNumKeys { get; set; }
         [XmlElement(ElementName = "crewStringToNumValues", Namespace = "Zandra")]
-        public List<int> CrewStringToNumValues { get; set; }
+        public ObservableCollection<int> CrewStringToNumValues { get; set; }
         [XmlIgnoreAttribute()]
         public Dictionary<string, int> CrewStringToNum;
 
         //Maps the cargo description string to approved standard cargo lists
         [XmlElement(ElementName = "cargoStringToStandardKeys", Namespace = "Zandra")]
-        public List<string> CargoStringToStandardKeys { get; set; }
+        public ObservableCollection<string> CargoStringToStandardKeys { get; set; }
         [XmlElement(ElementName = "cargoStringToStandardValues", Namespace = "Zandra")]
-        public List<CargoDetail> CargoStringToStandardValues { get; set; }
-        [XmlElement(ElementName = "cargoStringToStandard", Namespace = "Zandra")]
+        public ObservableCollection<CargoDetail> CargoStringToStandardValues { get; set; }
+        [XmlIgnoreAttribute()]
         public Dictionary<string, CargoDetail> CargoStringToStandard;
 
         [XmlElement(ElementName = "entryToValidPointKeys", Namespace = "Zandra")]
-        public List<string> EntryToValidPointKeys { get; set; }
+        public ObservableCollection<string> EntryToValidPointKeys { get; set; }
         [XmlElement(ElementName = "entryToValidPointValues", Namespace = "Zandra")]
-        public List<string> EntryToValidPointValues { get; set; }
+        public ObservableCollection<Point> EntryToValidPointValues { get; set; }
         [XmlIgnoreAttribute()]
-        public Dictionary<string, string> EntryToValidPoint;
+        public Dictionary<string, Point> EntryToValidPoint;
 
-        [XmlElement(ElementName = "validCargoStatements", Namespace = "Zandra")]
-        public List<string> ValidCargoStatement;
+       // [XmlElement(ElementName = "validCargoStatements", Namespace = "Zandra")]
+        //public ObservableCollection<string> ValidCargoStatement;
 
 
     }

@@ -87,6 +87,9 @@
     <Compile Include="DipNote.cs" />
     <Compile Include="GovClearance.cs" />
     <Compile Include="Point.cs" />
+    <Compile Include="PointDisplay.xaml.cs">
+      <DependentUpon>PointDisplay.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Route.cs" />
     <Compile Include="RoutePoint.cs" />
     <Compile Include="SeleniumAPACSDataScraper.cs" />
@@ -100,6 +103,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="DownloadProgress.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PointDisplay.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -21,7 +21,6 @@ namespace Zandra
         //parameterless constructor to allow serialization
         private APACSRequests()
         {
-            utilities = new Utilities();
         }
         public void Initialize(ref Utilities utils)
         {
@@ -46,7 +45,7 @@ namespace Zandra
             {
                 if (Request.Return.CountrySpecifics == null)
                 {
-                    Request.Return.CountrySpecifics = new List<CountrySpecifics>();
+                    Request.Return.CountrySpecifics = new ObservableCollection<CountrySpecifics>();
                 }
                 else
                 {
@@ -62,6 +61,7 @@ namespace Zandra
             foreach (GetAircraftRequestResponse Request in Requests)
             {
                 Initialize();
+                PopulateCounties(Request);
                 PopulateCountrySpecifics(Request);
                 ParseTextDateTimes(Request);
                 //SetReturnTripType(Request);
@@ -75,23 +75,109 @@ namespace Zandra
             }
         }
 
-        private void PopulateCountrySpecifics(GetAircraftRequestResponse Request)
+        private void PopulateCounties(GetAircraftRequestResponse Request)
         {
-            foreach(Itinerary leg in Request.Return.Itinerary)
+            //Ensure country is in the overall country list
+            foreach (Itinerary leg in Request.Return.Itinerary)
             {
                 bool containsCountry = false;
-                foreach(CountrySpecifics specific in Request.Return.CountrySpecifics)
+                foreach (Country country in utilities.userPreferences.Countries)
                 {
-                    if(specific.CountryCode == leg.CountryCode) { containsCountry = true; }
+                    if (country.Code == leg.CountryCode)
+                    {
+                        containsCountry = true;
+                        break;
+                    }
                 }
-                if (!containsCountry) 
+                if (!containsCountry)
                 {
-                    Request.Return.CountrySpecifics.Add(
-                        new CountrySpecifics(leg.CountryCode));  
+                    string citizenName = null;
+                    bool goodName = false;
+                    while (!goodName)
+                    {
+                        citizenName = Interaction.InputBox(
+                            "What are people from " + leg.CountryName + "\n" +
+                            " referred to as?", "Citizen Type", "");
+                        goodName = MessageBox.Show("Is " + citizenName + " correct?",
+                            "Verify Input", MessageBoxButton.YesNo)
+                            == MessageBoxResult.Yes;
+                    }
+                    if (citizenName != null)
+                    {
+                        utilities.userPreferences.Countries.Add(
+                            new Country(leg.CountryName, leg.CountryCode, citizenName));
+                    }
+                    else
+                    {
+                        utilities.userPreferences.Countries.Add(
+                            new Country(leg.CountryName, leg.CountryCode));
+                    }
                 }
             }
         }
-            
+
+        private void PopulateCountrySpecifics(GetAircraftRequestResponse Request)
+        {
+            //Ensure country is in the overall country list
+            foreach (Itinerary leg in Request.Return.Itinerary)
+            {
+                bool containsCountry = false;
+                foreach (CountrySpecifics specific in Request.Return.CountrySpecifics)
+                {
+                    if (specific.CountryCode == leg.CountryCode) { containsCountry = true; }
+                }
+                if (!containsCountry)
+                {
+                    Request.Return.CountrySpecifics.Add(
+                        new CountrySpecifics(leg.CountryCode));
+                }
+            }
+        }
+
+        //Map Named Points
+
+        private void PopulatePoints(GetAircraftRequestResponse Request)
+        {
+            foreach (Itinerary leg in Request.Return.Itinerary)
+            {
+                if (utilities.userPreferences.UserCountryCode == leg.CountryCode)
+                {
+                    string substring = leg.EntryPoints.Trim().ToUpper();
+                    substring = substring.Substring(1, substring.IndexOf(" "));
+
+                    if (utilities.userPreferences.EntryToValidPoint.TryGetValue(substring, out Point point))
+                    {
+                        if (!point.IsEntry)
+                        {
+                            if (MessageBox.Show("Is " + substring + " a valid entry point?",
+                                "Valid Entry Point?", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+                            {
+                                leg.Errors.Add(ItineraryErrors.INVALID_ENTRY_POINT);
+                            }
+                            else
+                            {
+                                point.IsEntry = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ObservableCollection<Country> countriesMinus =
+                            new ObservableCollection<Country>(utilities.userPreferences.Countries
+                            .Except(point.BorderingCountries)); ;
+                        PointDisplay pointDisplay = new PointDisplay(utilities.userPreferences);
+                        Point newPoint = new Point();
+                        pointDisplay.DataContext = newPoint;
+                        pointDisplay.BorderingCountriesGrid.ItemsSource = newPoint.BorderingCountries;
+                        pointDisplay.CountriesGrid.ItemsSource = countriesMinus;
+                        pointDisplay.Show();
+
+                    }
+                }
+            }
+        }
+        
+
         //Map Number of PAX field to integer
         private void ParsePassengerNumbers(GetAircraftRequestResponse Request)
         {
@@ -152,7 +238,7 @@ namespace Zandra
             {
                 foreach (CountrySpecifics specific in Request.Return.CountrySpecifics)
                 {
-                    if(specific.CountryCode == utilities.userPreferences.UserCountryCode)
+                    if (specific.CountryCode == utilities.userPreferences.UserCountryCode)
                     {
                         specific.CargoDetail = cargoDetail;
                     }
@@ -176,7 +262,7 @@ namespace Zandra
                     if (leg != leg2)
                     {
                         DateTime? late2 = FindLatestItineraryTime(leg2);
-                        if (early < late2) 
+                        if (early < late2)
                         {
                             if (leg.CountryCode == leg2.CountryCode)
                             {
@@ -338,7 +424,6 @@ namespace Zandra
         }
 
         //Find earliest Result Date
-
         public DateTime? FindEarliestReturnDate(Return trip)
         {
             DateTime? earliest = null;
@@ -835,12 +920,12 @@ namespace Zandra
                 }
             }
         }
-        //Clear Previouis Flagged Errors
+        //Clear Previous Flagged Errors
         private void ClearErrors()
         {
             foreach (GetAircraftRequestResponse Request in Requests)
             {
-                //Clear Previouis Flagged Errors
+                //Clear Prevouis Flagged Errors
                 foreach (Itinerary leg in Request.Return.Itinerary)
                 {
                     leg.Errors.Clear();
@@ -856,6 +941,10 @@ namespace Zandra
             foreach (CountrySpecifics specific in Request.Return.CountrySpecifics)
             {
                 specific.EarliestEntryDate = FindEarliestReturnDate(Request.Return);
+                if (specific.CountryCode == utilities.userPreferences.UserCountryCode)
+                {
+                    Request.Return.EarliestEntryDate = specific.EarliestEntryDate;
+                }
             }
         }
         public void UserDataCleanUp()
@@ -910,6 +999,8 @@ namespace Zandra
                         }
                     }
                 }
+                //Resolve Cargo
+
             }
         }
     }
