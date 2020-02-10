@@ -24,18 +24,19 @@ namespace Zandra
             AircraftTailPrefix = new ObservableCollection<string>();
         }
 
-        public Country(string name, string code, string citizenNomenclature)
+        public Country(string name, string code, string nationality)
         {
             Name = name;
             Code = code;
-            CitizenNomenclature = citizenNomenclature;
+            Nationality = nationality;
             AircraftTailPrefix = new ObservableCollection<string>();
         }
-        public Country(string name, string code, string citizenNomenclature, ObservableCollection<string> acPrefixes)
+
+        public Country(string name, string code, string nationality, ObservableCollection<string> acPrefixes)
         {
             Name = name;
             Code = code;
-            CitizenNomenclature = citizenNomenclature;
+            Nationality = nationality;
             if (acPrefixes != null)
             {
                 AircraftTailPrefix = acPrefixes;
@@ -51,8 +52,7 @@ namespace Zandra
         public string Name { get; set; }
         [XmlElement(ElementName = "aircraftTailPrefix", Namespace = "Zandra")]
         public ObservableCollection<string> AircraftTailPrefix { get; set; }
-        [XmlElement(ElementName = "citizenNomenclature", Namespace = "Zandra")]
-        public string CitizenNomenclature { get; set; }
-
+        [XmlElement(ElementName = "nationality", Namespace = "Zandra")]
+        public string Nationality { get; set; }
     }
 }

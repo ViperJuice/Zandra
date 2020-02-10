@@ -135,16 +135,16 @@ namespace Zandra
         }
 
         //Map Named Points
-
         private void PopulatePoints(GetAircraftRequestResponse Request)
         {
             foreach (Itinerary leg in Request.Return.Itinerary)
             {
+                //Limit point mapping to users' local country
                 if (utilities.userPreferences.UserCountryCode == leg.CountryCode)
                 {
+                    //Check Entry Points
                     string substring = leg.EntryPoints.Trim().ToUpper();
                     substring = substring.Substring(1, substring.IndexOf(" "));
-
                     if (utilities.userPreferences.EntryToValidPoint.TryGetValue(substring, out Point point))
                     {
                         if (!point.IsEntry)
@@ -162,17 +162,130 @@ namespace Zandra
                     }
                     else
                     {
-                        ObservableCollection<Country> countriesMinus =
-                            new ObservableCollection<Country>(utilities.userPreferences.Countries
-                            .Except(point.BorderingCountries)); ;
-                        PointDisplay pointDisplay = new PointDisplay(utilities.userPreferences);
-                        Point newPoint = new Point();
-                        pointDisplay.DataContext = newPoint;
-                        pointDisplay.BorderingCountriesGrid.ItemsSource = newPoint.BorderingCountries;
-                        pointDisplay.CountriesGrid.ItemsSource = countriesMinus;
-                        pointDisplay.Show();
-
+                        if (MessageBox.Show("Would you like to add " + leg.EntryPoints + "\n"
+                            + "to the list of valid entry points?",
+                            "Add Point?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        {
+                            Point newPoint = new Point
+                            {
+                                IsEntry = true
+                            };
+                            utilities.EditPoint(newPoint);
+                            if (newPoint != null)
+                            {
+                                utilities.userPreferences.EntryToValidPoint
+                                    .Add(leg.EntryPoints.ToUpper().Trim(), newPoint);
+                            }
+                        }
+                        else
+                        {
+                            leg.Errors.Add(ItineraryErrors.INVALID_ENTRY_POINT);
+                        }
                     }
+
+                    //Check Exit Points
+                    substring = leg.ExitPoints.Trim().ToUpper();
+                    substring = substring.Substring(1, substring.IndexOf(" "));
+                    if (utilities.userPreferences.EntryToValidPoint.TryGetValue(substring, out point))
+                    {
+                        if (!point.IsExit)
+                        {
+                            if (MessageBox.Show("Is " + substring + " a valid exit point?",
+                                "Valid Exit Point?", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+                            {
+                                leg.Errors.Add(ItineraryErrors.INVALID_EXIT_POINT);
+                            }
+                            else
+                            {
+                                point.IsExit = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (MessageBox.Show("Would you like to add " + leg.ExitPoints + "\n"
+                            + "to the list of valid exit points?",
+                            "Add Point?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        {
+                            Point newPoint = new Point
+                            {
+                                IsExit = true
+                            };
+                            utilities.EditPoint(newPoint);
+                            if (newPoint != null)
+                            {
+                                utilities.userPreferences.EntryToValidPoint
+                                    .Add(leg.ExitPoints.ToUpper().Trim(), newPoint);
+                            }
+                        }
+                        else
+                        {
+                            leg.Errors.Add(ItineraryErrors.INVALID_EXIT_POINT);
+                        }
+                    }
+
+                    //Check Airfields Points
+                    substring = leg.IcaoCode.Trim().ToUpper();
+                    substring = substring.Substring(1, substring.IndexOf(" "));
+                    if (utilities.userPreferences.EntryToValidPoint.TryGetValue(substring, out point))
+                    {
+                        if (!point.IsAirfield)
+                        {
+                            if (MessageBox.Show("Is " + substring + " a valid Airfield ICAO point?",
+                                "Valid Airfield Point?", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+                            {
+                                if (leg.Origination == "true")
+                                {
+                                    leg.Errors.Add(ItineraryErrors.INVALID_TAKEOFF_POINT);
+                                }
+                                else
+                                {
+                                    leg.Errors.Add(ItineraryErrors.INVALID_LANDING_POINT);
+                                }
+                            }
+                            else
+                            {
+                                if (MessageBox.Show("Would you like to add " + leg.IcaoCode + "\n"
+                                    + "to the list of valid airfields?",
+                                    "Add Point?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                                {
+                                    Point newPoint = new Point
+                                    {
+                                        IsAirfield = true
+                                    };
+                                    utilities.EditPoint(newPoint);
+                                    if (newPoint != null)
+                                    {
+                                        utilities.userPreferences.EntryToValidPoint
+                                            .Add(leg.IcaoCode.ToUpper().Trim(), newPoint);
+                                    }
+                                }
+                                else
+                                {
+                                    if (leg.Origination == "true")
+                                    {
+                                        leg.Errors.Add(ItineraryErrors.INVALID_TAKEOFF_POINT);
+                                    }
+                                    else
+                                    {
+                                        leg.Errors.Add(ItineraryErrors.INVALID_LANDING_POINT);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Would you like to add " + leg.IcaoCode + "\n"
+                            + "to the list of valid airfeilds?", "Add Airfield?", MessageBoxButton.YesNo);
+                        utilities.EditPoint(point);
+                        if (point != null)
+                        {
+                            utilities.userPreferences.EntryToValidPoint
+                                .Add(leg.IcaoCode.ToUpper().Trim(), point);
+                        }
+                    }
+
                 }
             }
         }

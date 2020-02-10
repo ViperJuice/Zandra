@@ -46,23 +46,10 @@ namespace Zandra
                 AfterDeserialize(ref me);
             }
         }
-        public void AddPoint(Point point)
-        {
-            ObservableCollection<Country> countriesMinus =
-                           new ObservableCollection<Country>(utilities.userPreferences.Countries
-                           .Except(point.BorderingCountries)); ;
-            PointDisplay pointDisplay = new PointDisplay(utilities.userPreferences);
-            Point newPoint = new Point();
-            pointDisplay.DataContext = newPoint;
-            pointDisplay.BorderingCountriesGrid.ItemsSource = newPoint.BorderingCountries;
-            pointDisplay.CountriesGrid.ItemsSource = countriesMinus;
-            pointDisplay.Show();
-        }
+       
         public ZandraUserPreferences(Utilities utils)
         {
             //TODO: Impliment user selectable 
-
-
 
 
             //TODO: Serialize and save after update

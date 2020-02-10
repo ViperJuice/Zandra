@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -106,6 +107,35 @@ namespace Zandra
         public void RestoreMe(ref ZandraUserPreferences me)
         {
             RestoreFromXML(ref me, Path.GetFullPath(@"ZandraUserPreferences.xml"));
+        }
+
+        public void EditPoint(Point point)
+        {
+            ObservableCollection<Country> countriesMinus =
+                           new ObservableCollection<Country>(this.userPreferences.Countries
+                           .Except(point.BorderingCountries));
+            PointDisplay pointDisplay = new PointDisplay(this.userPreferences)
+            {
+                DataContext = point
+            };
+            pointDisplay.BorderingCountriesGrid.ItemsSource = point.BorderingCountries;
+            pointDisplay.CountriesGrid.ItemsSource = countriesMinus;
+            pointDisplay.Show();
+            if (point != null)
+            {
+                //Avoid duplicate points in dictionary mapping
+                foreach (Point pnt in this.userPreferences.EntryToValidPoint.Values)
+                {
+                    if (pnt.Name == point.Name)
+                    {
+                        pnt.IsAirfield = point.IsAirfield;
+                        pnt.IsEntry = point.IsEntry;
+                        pnt.IsExit = point.IsExit;
+                        pnt.BorderingCountries = point.BorderingCountries;
+                        point = pnt;
+                    }
+                }
+            }
         }
     }
 }
