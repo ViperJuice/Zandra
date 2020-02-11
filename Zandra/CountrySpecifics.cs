@@ -31,10 +31,6 @@ namespace Zandra
 		//
 		[XmlElement(ElementName = "tripType", Namespace = "Zandra")]
 		public TripType TripType { get; set; }
-
-		//Overall trip type relative to the country (OVERFLY or TAKEOFF/LAND)
-		//[XmlElement(ElementName = "type", Namespace = "Zandra")]
-		//public string Type { get; set; }
 		[XmlElement(ElementName = "earliestEntryDate", Namespace = "Zandra")]
 		public DateTime? EarliestEntryDate { get; set; }
 		[XmlElement(ElementName = "zandraRecommendation", Namespace = "Zandra")]
@@ -53,5 +49,8 @@ namespace Zandra
 		public GovClearance GovClearanceStatus { get; set; }
 		[XmlElement(ElementName = "cargoDetail", Namespace = "Zandra")]
 		public CargoDetail CargoDetail { get; set; }
+		[XmlElement(ElementName = "inCountryRoute", Namespace = "Zandra")]
+		public Route InCountryRoute { get; set; }
+
 	}
 }

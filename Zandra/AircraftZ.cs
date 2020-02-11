@@ -11,7 +11,7 @@ namespace Zandra
     [XmlRoot(ElementName = "route", Namespace = "Zandra")]
     public class AircraftZ
     {
-        private AircraftZ() { }
+        public AircraftZ() { }
         public AircraftZ(string type, uint maxPax, bool military)
         {
             Type = type;
@@ -19,11 +19,11 @@ namespace Zandra
             military = Military;
         }
         [XmlElement(ElementName = "type", Namespace = "Zandra")]
-        string Type { get; set; }
+        public string Type { get; set; }
         [XmlElement(ElementName = "military", Namespace = "Zandra")]
-        bool Military { get; set; }
+        public bool Military { get; set; }
         [XmlElement(ElementName = "maxPax", Namespace = "Zandra")]
-        uint MaxPax { get; set; }
+        public uint MaxPax { get; set; }
     }
 }
 

@@ -137,6 +137,17 @@ namespace Zandra
                 }
             }
         }
+        public void InCountryRouteBuilder(GetAircraftRequestResponse Request)
+        {
+            if (Request.Return.Errors.Contains(ReturnErrors.CONTAINS_INVALID_ITINERARY))
+            {
+
+            }
+        }
+        public void OverallRouteBuilder(GetAircraftRequestResponse Request)
+        {
+
+        }
     }
 }
 

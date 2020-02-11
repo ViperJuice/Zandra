@@ -14,11 +14,8 @@ namespace Zandra
     { 
         public Route()
         {
-            RoutePoints = new ObservableCollection<RoutePoint>();
-            ApprovalNumbers = new ObservableCollection<string>();
+            RouteLegs = new ObservableCollection<RouteLeg>();
         }
-        [XmlElement(ElementName = "routePoints", Namespace = "Zandra")]
-        ObservableCollection<RoutePoint> RoutePoints { get; set; }
         [XmlElement(ElementName = "validFrom", Namespace = "Zandra")]
         DateTime? ValidFrom { get; set; }
         [XmlElement(ElementName = "validTo", Namespace = "Zandra")]
@@ -27,7 +24,13 @@ namespace Zandra
         bool IsBlanket { get; set; }
         [XmlElement(ElementName = "approved", Namespace = "Zandra")]
         bool Approved { get; set; }
-        [XmlElement(ElementName = "approvalNumber", Namespace = "Zandra")]
-        ObservableCollection<string> ApprovalNumbers{ get; set; }
+        [XmlElement(ElementName = "routeLegs", Namespace = "Zandra")]
+        ObservableCollection<RouteLeg> RouteLegs{ get; set; }
+        [XmlElement(ElementName = "aircraft", Namespace = "Zandra")]
+        Aircraft aircraft { get; set; }
+        [XmlElement(ElementName = "callsign", Namespace = "Zandra")]
+        string callsign { get; set; }
+        [XmlElement(ElementName = "containsErrors", Namespace = "Zandra")]
+        bool ContainsErrors { get; set; }
     }
 }

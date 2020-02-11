@@ -81,6 +81,7 @@
     <Compile Include="APACSRequest.cs" />
     <Compile Include="APACSRequests.cs" />
     <Compile Include="AircraftZ.cs" />
+    <Compile Include="CargoDescription.cs" />
     <Compile Include="CargoDetail.cs" />
     <Compile Include="Country.cs" />
     <Compile Include="CountrySpecifics.cs" />
@@ -91,6 +92,7 @@
       <DependentUpon>PointDisplay.xaml</DependentUpon>
     </Compile>
     <Compile Include="Route.cs" />
+    <Compile Include="RouteLeg.cs" />
     <Compile Include="RoutePoint.cs" />
     <Compile Include="SeleniumAPACSDataScraper.cs" />
     <Compile Include="Utilities.cs" />

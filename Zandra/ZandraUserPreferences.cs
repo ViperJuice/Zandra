@@ -107,7 +107,10 @@ namespace Zandra
             CargoStringToStandardValues = new ObservableCollection<CargoDetail>(CargoStringToStandard.Values.ToList()); 
 
             EntryToValidPointKeys = new ObservableCollection<string>(EntryToValidPoint.Keys.ToList());
-            EntryToValidPointValues = new ObservableCollection<Point>(EntryToValidPoint.Values.ToList()); 
+            EntryToValidPointValues = new ObservableCollection<Point>(EntryToValidPoint.Values.ToList());
+
+            AcStringToValidACKeys = new ObservableCollection<string>(AcStringToValidAC.Keys.ToList());
+            AcStringToValidACValues = new ObservableCollection<AircraftZ>(AcStringToValidAC.Values.ToList());
 
         }
 
@@ -117,6 +120,7 @@ namespace Zandra
             ArraysToLibrary(me.CrewStringToNumKeys, me.CrewStringToNumValues, me.CrewStringToNum);
             ArraysToLibrary(me.CargoStringToStandardKeys, me.CargoStringToStandardValues, me.CargoStringToStandard);
             ArraysToLibrary(me.EntryToValidPointKeys, me.EntryToValidPointValues, me.EntryToValidPoint);
+            ArraysToLibrary(me.AcStringToValidACKeys, me.AcStringToValidACValues, me.AcStringToValidAC);
         }
 
         public static void ArraysToLibrary<K,V>(ObservableCollection<K> keys, ObservableCollection<V> values, Dictionary<K,V> dict)
@@ -176,6 +180,7 @@ namespace Zandra
         [XmlIgnoreAttribute()]
         public Dictionary<string, CargoDetail> CargoStringToStandard;
 
+        //Maps legitimate points to user entered point names
         [XmlElement(ElementName = "entryToValidPointKeys", Namespace = "Zandra")]
         public ObservableCollection<string> EntryToValidPointKeys { get; set; }
         [XmlElement(ElementName = "entryToValidPointValues", Namespace = "Zandra")]
@@ -183,9 +188,18 @@ namespace Zandra
         [XmlIgnoreAttribute()]
         public Dictionary<string, Point> EntryToValidPoint;
 
-       // [XmlElement(ElementName = "validCargoStatements", Namespace = "Zandra")]
-        //public ObservableCollection<string> ValidCargoStatement;
+        //Maps legitimate points to user entered point names
+        [XmlElement(ElementName = "acStringToValidACKeys", Namespace = "Zandra")]
+        public ObservableCollection<string> AcStringToValidACKeys { get; set; }
+        [XmlElement(ElementName = "acStringToValidACValues", Namespace = "Zandra")]
+        public ObservableCollection<AircraftZ> AcStringToValidACValues { get; set; }
+        [XmlIgnoreAttribute()]
+        public Dictionary<string, AircraftZ> AcStringToValidAC;
 
+        [XmlElement(ElementName = "noHAZCargoStatements", Namespace = "Zandra")]
+        public ObservableCollection<string> NoHAZCargoStatements { get; set; }
 
+        [XmlElement(ElementName = "blanketRoutes", Namespace = "Zandra")]
+        public ObservableCollection<Route> BlanketRoutes { get; set; }
     }
 }

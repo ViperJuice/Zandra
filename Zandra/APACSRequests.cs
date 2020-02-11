@@ -61,21 +61,71 @@ namespace Zandra
             foreach (GetAircraftRequestResponse Request in Requests)
             {
                 Initialize();
-                PopulateCounties(Request);
+                PopulateCountries(Request);
                 PopulateCountrySpecifics(Request);
+                PopulateCargoDescriptions(Request);
                 ParseTextDateTimes(Request);
-                //SetReturnTripType(Request);
+                PopulatePoints(Request);
                 SetErrorFlagsByLegType(Request);
                 SetContainsInvalidLegFlag(Request);
                 SetItineraryOverlapFlag(Request);
                 FindEarliestReturnDates(Request);
                 ParsePassengerNumbers(Request);
                 ParseCrewNumbers(Request);
-                FlagValidCargoStatemetns(Request);
+                ParseAircraftType(Request);//
+                FlagValidCargoStatements(Request);
+                SetReturnErrorFlags(Request);
             }
         }
 
-        private void PopulateCounties(GetAircraftRequestResponse Request)
+        private void PopulateCargoDescriptions(GetAircraftRequestResponse Request)
+        {
+            CountrySpecifics countrySpecific = null;
+            CargoDetail cargoDetail = null;
+            foreach (CountrySpecifics specific in Request.Return.CountrySpecifics)
+            {
+                //set country specific to the user's country
+
+                    countrySpecific = specific;
+                    cargoDetail = specific.CargoDetail;
+                    cargoDetail.DescriptionHAZ = Request.Return.Cargo.Hazardous.Trim().ToUpper();
+                    if (Request.Return.Cargo.HazardousFormatted == "true")
+                    {
+                        cargoDetail.Description.HazardousFormatted = true;
+                    }
+                    else
+                    {
+                        cargoDetail.Description.HazardousFormatted = false;
+                    }
+                cargoDetail.Description.DescriptionHazardous
+                    = Request.Return.Cargo.Hazardous.Trim().ToUpper();
+                cargoDetail.Description.Description
+                    = Request.Return.Cargo.Description.Trim().ToUpper();
+            }
+        }
+
+        private void SetReturnErrorFlags(GetAircraftRequestResponse request)
+        {
+            //TODO: Set return errors based on subclass errors
+            throw new NotImplementedException();
+        }
+
+        private void ParseAircraftType(GetAircraftRequestResponse request)
+        {
+            AircraftZ aircraft = new AircraftZ();
+            if (utilities.userPreferences.AcStringToValidAC
+                    .TryGetValue(request.Return.Aircraft.AircraftType, out aircraft))
+            {
+                request.Return.AircraftZ = aircraft;
+            }
+            else
+            {
+                //set null as flag to indicate required resolution
+                request.Return.AircraftZ = null;
+            }
+        }
+
+        private void PopulateCountries(GetAircraftRequestResponse Request)
         {
             //Ensure country is in the overall country list
             foreach (Itinerary leg in Request.Return.Itinerary)
@@ -86,32 +136,14 @@ namespace Zandra
                     if (country.Code == leg.CountryCode)
                     {
                         containsCountry = true;
+                        leg.Country = country;
                         break;
                     }
                 }
                 if (!containsCountry)
                 {
-                    string citizenName = null;
-                    bool goodName = false;
-                    while (!goodName)
-                    {
-                        citizenName = Interaction.InputBox(
-                            "What are people from " + leg.CountryName + "\n" +
-                            " referred to as?", "Citizen Type", "");
-                        goodName = MessageBox.Show("Is " + citizenName + " correct?",
-                            "Verify Input", MessageBoxButton.YesNo)
-                            == MessageBoxResult.Yes;
-                    }
-                    if (citizenName != null)
-                    {
-                        utilities.userPreferences.Countries.Add(
-                            new Country(leg.CountryName, leg.CountryCode, citizenName));
-                    }
-                    else
-                    {
-                        utilities.userPreferences.Countries.Add(
-                            new Country(leg.CountryName, leg.CountryCode));
-                    }
+                    //Flag with null for cleanup
+                    leg.Country = null;
                 }
             }
         }
@@ -175,6 +207,7 @@ namespace Zandra
                             {
                                 utilities.userPreferences.EntryToValidPoint
                                     .Add(leg.EntryPoints.ToUpper().Trim(), newPoint);
+                                utilities.userPreferences.SaveMe();
                             }
                         }
                         else
@@ -216,6 +249,7 @@ namespace Zandra
                             {
                                 utilities.userPreferences.EntryToValidPoint
                                     .Add(leg.ExitPoints.ToUpper().Trim(), newPoint);
+                                utilities.userPreferences.SaveMe();
                             }
                         }
                         else
@@ -258,6 +292,7 @@ namespace Zandra
                                     {
                                         utilities.userPreferences.EntryToValidPoint
                                             .Add(leg.IcaoCode.ToUpper().Trim(), newPoint);
+                                        utilities.userPreferences.SaveMe();
                                     }
                                 }
                                 else
@@ -318,7 +353,7 @@ namespace Zandra
             //resolve pax number
         }
 
-        //Map Number of PAX field to integer
+        //Map Number of crew field to integer
         private void ParseCrewNumbers(GetAircraftRequestResponse Request)
         {
             if (Int32.TryParse(Request.Return.Crew.NumberOfCrew, out int numValue))
@@ -344,23 +379,169 @@ namespace Zandra
             }
         }
 
-        private void FlagValidCargoStatemetns(GetAircraftRequestResponse Request)
+        private void FlagValidCargoStatements(GetAircraftRequestResponse Request)
         {
-            if (utilities.userPreferences.CargoStringToStandard.TryGetValue
-                     (Request.Return.Crew.NumberOfCrew.ToLower().Trim(), out CargoDetail cargoDetail))
+            CountrySpecifics countrySpecific = null;
+            CargoDetail cargoDetail = null;
+            foreach (CountrySpecifics specific in Request.Return.CountrySpecifics)
             {
-                foreach (CountrySpecifics specific in Request.Return.CountrySpecifics)
+                //set country specific to the user's country
+                if (specific.CountryCode == utilities.userPreferences.UserCountryCode)
                 {
-                    if (specific.CountryCode == utilities.userPreferences.UserCountryCode)
+                    countrySpecific = specific;
+                    cargoDetail = specific.CargoDetail;
+                    break;
+                }
+            }
+            //Check for hazardous cargo text
+            if (!CheckContainsHazCargoText())
+            {
+                if (CheckCargoDescriptionForHaz())
+                {
+                    cargoDetail.ContainsHAZ = true;
+                    cargoDetail.Errors.Add(CargoErrors.HAZERDOUS_CARGO_NOT_LISTED);
+                }
+                else
+                {
+                    cargoDetail.ContainsHAZ = false;
+                    if (CheckCargoDiscriptionStandard())
                     {
-                        specific.CargoDetail = cargoDetail;
+                        AddCargoDiscriptionToStandardList();
                     }
                 }
             }
+            //Check for hazardous cargo in normal cargo description
             else
             {
-                //Set flag to ask for user input to resolve cargo details
-                Request.Return.Crew.NumberOfCrewZ = -1;
+                if (CheckHAZStatementAsApprovedNoHAZ())
+                {
+                    if (!CheckCargoDescriptionForHaz()) 
+                    {
+                        cargoDetail.ContainsHAZ = false;
+                    }
+                    else if(!cargoDetail.Description.HazardousFormatted)
+                    {
+                        if (HAZCargoStatementContainsHAZCargo())
+                        {
+                            cargoDetail.ContainsHAZ = true;
+                        }
+                        else
+                        {
+                            cargoDetail.ContainsHAZ = false;
+                        }
+          
+                    }
+                    else
+                    {
+                        cargoDetail.ContainsHAZ = true;
+                    }
+                }
+            }
+
+            //Nested Function to check for standard cargo statement and no HAZ Cargo in cargo discription
+            bool CheckCargoDescriptionForHaz()
+            {
+                //Check if cargo discription is a standard statement
+                if (CheckCargoDiscriptionStandard())
+                {
+                    return false;
+                }
+                //If not ask if it contains hazardous cargo
+                else
+                {
+                    if (MessageBox.Show("Is the Cargo Discription free\n" +
+                        "of any hazardous cargo?\n" + "Cargo Discription:\n" +
+                        cargoDetail.Description.Description, "Haz-Cargo in Cargo Description?",
+                        MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes)
+                    {
+                        return false;
+                    }
+                    else
+                    {                 
+                        ;
+                        return true;
+                    }
+                }
+            }
+            bool CheckCargoDiscriptionStandard()
+            {
+                if (utilities.userPreferences.CargoStringToStandard.TryGetValue
+                    (cargoDetail.Description.Description.ToUpper().Trim(), out cargoDetail))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            bool CheckContainsHazCargoText()
+            {
+                if (Request.Return.Cargo.Hazardous.Trim() == "" ||
+                Request.Return.Cargo.Hazardous.Trim() == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            void AddCargoDiscriptionToStandardList()
+            {
+                if(MessageBox.Show("Would you like to add this cargo discription\n" +
+                    "to the standard unrestricted list?", "Add Standard Discription?",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question,
+                    MessageBoxResult.No) == MessageBoxResult.No)
+                {
+                    utilities.userPreferences.CargoStringToStandard
+                        .Add(cargoDetail.Description.Description.Trim().ToUpper(),cargoDetail);
+                }
+            }
+            bool CheckHAZStatementAsApprovedNoHAZ()
+            {
+                //Check if haz-cargo statement is an approved no-haz cargo statement
+                //check tha there is no formated Haz statement
+                if (utilities.userPreferences.NoHAZCargoStatements
+                    .Contains(Request.Return.Cargo.Hazardous.Trim().ToUpper()) &&
+                    Request.Return.Cargo.HazardousFormatted == "false")
+                {
+                    return true;
+                }
+                else 
+                { 
+                    return false; 
+                }
+            }
+            bool HAZCargoStatementContainsHAZCargo()
+            {
+                //Check if user would like to add statment as a no-haz statement
+                if (MessageBox.Show("Does this shipment Contain hazardous cargo\n" +
+                    "based on the Hazardous cargo description?" +
+                    "Hazardous Cargo Discription: \n" +
+                    cargoDetail.DescriptionHAZ,
+                    "Hazardous Cargo?", MessageBoxButton.YesNo
+                    , MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+                {
+                    return true;
+                }
+                else
+                {
+                    AddHAZStatementToNoHAZList();
+                    return false;
+                }
+            }
+            void AddHAZStatementToNoHAZList()
+            {
+                if (MessageBox.Show("Would you like to add \"\n" +
+                   "as an approved NO-HAZARDOUS CARGO statement?",
+                   "Add No-Hazardous Statement", MessageBoxButton.YesNo,
+                   MessageBoxImage.Question, MessageBoxResult.No)
+                   == MessageBoxResult.Yes)
+                {
+                    utilities.userPreferences.NoHAZCargoStatements
+                        .Add(cargoDetail.DescriptionHAZ.Trim().ToUpper());
+                }
             }
         }
 
@@ -407,8 +588,6 @@ namespace Zandra
             }
         }
 
-
-
         private void SetContainsInvalidLegFlag(GetAircraftRequestResponse Request)
         {
             bool invalidItin = false;
@@ -424,7 +603,7 @@ namespace Zandra
             }
         }
 
-        //Function to find earliest itinerary time with null value returned ifg all null
+        //Function to find earliest itinerary time with null value returned if all null
         public DateTime? FindEarliestItineraryTime(Itinerary leg)
         {
             DateTime? earliest = null;
@@ -716,35 +895,12 @@ namespace Zandra
 
             }
         }
-        //public void SetReturnTripType(GetAircraftRequestResponse Request)
-        //{
-        //    foreach (Itinerary leg in Request.Return.Itinerary)
-        //    {
-        //        foreach(CountrySpecifics specific in Request.Return.CountrySpecifics)
-        //        {
-        //            //Set Request Flight Type
-        //            if (leg.CountryName == specific.CountryCode)
-        //            {
-        //                if (leg.FlightType == @"TAKE OFF/LAND")
-        //                {
-        //                    specific.Type = @"TAKE OFF/LAND";
-        //                }
-        //                else if (specific.Type != @"TAKE OFF/LAND" & leg.FlightType == "OVERFLY")
-        //                {
-        //                    specific.Type = "OVERFLY";
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
 
         public void SetErrorFlagsByLegType(GetAircraftRequestResponse Request)
         {
             //Sort into leg types
             foreach (Itinerary leg in Request.Return.Itinerary)
             {
-
-
                 //Sort Entry Land Exit
                 if (leg.ArriveTimeZ != null
                     & leg.LandingTimeZ != null
@@ -1062,41 +1218,25 @@ namespace Zandra
         }
         public void UserDataCleanUp()
         {
+            ResolvePAXNumbers();
+            ResolveCrewNumbers();
+            ResloveMissingCountries();
+            ResolveAircraftType();
+            //Resolve Cargo
+            
+        }
+        public void ResolveCrewNumbers()
+        {
             foreach (GetAircraftRequestResponse Request in Requests)
             {
-                //resolve pax number
-                if (Request.Return.Cargo.NumberOfPassengersZ == -1)
-                {
-                    bool goodNumber = false;
-                    while (!goodNumber)
-                    {
-                        string input = Interaction.InputBox("How many passengers are represented by \n\""
-                        + Request.Return.Cargo.NumberOfPassengers + "\"",
-                        "Resolve Passenger Number", "Default", -1, -1);
-                        goodNumber = Int32.TryParse(input.ToLower().Trim(), out int pax);
-                        if (goodNumber)
-                        {
-                            Request.Return.Cargo.NumberOfPassengersZ = pax;
-                            MessageBoxResult result = MessageBox.Show("Do you want permenently map \n\""
-                               + Request.Return.Cargo.NumberOfPassengers + "\" to " +
-                                pax + "?", "Pax # Map Confirmation", MessageBoxButton.YesNo);
-                            if (result == MessageBoxResult.Yes)
-                            {
-                                utilities.userPreferences.PaxStringToNum.Add(Request.Return.Cargo.NumberOfPassengers.ToLower().Trim(), pax);
-                                utilities.userPreferences.SaveMe();
-                            }
-                        }
-                    }
-                }
-                //resolve crew number
                 if (Request.Return.Crew.NumberOfCrewZ == -1)
                 {
                     bool goodNumber = false;
                     while (!goodNumber)
                     {
                         string input = Interaction.InputBox("How many crew are represented by \n\""
-                        + Request.Return.Crew.NumberOfCrew + "\"",
-                        "Resolve Passenger Number", "Default", -1, -1);
+                        + Request.Return.Crew.NumberOfCrew + "\"?",
+                        "Resolve Passenger Number?", "", -1, -1);
                         goodNumber = Int32.TryParse(input.ToLower().Trim(), out int pax);
                         if (goodNumber)
                         {
@@ -1106,14 +1246,141 @@ namespace Zandra
                                 pax + "?", "Crew # Map Confirmation", MessageBoxButton.YesNo);
                             if (result == MessageBoxResult.Yes)
                             {
-                                utilities.userPreferences.CrewStringToNum.Add(Request.Return.Crew.NumberOfCrew.ToLower().Trim(), pax);
+                                utilities.userPreferences.CrewStringToNum
+                                    .Add(Request.Return.Crew.NumberOfCrew.ToLower().Trim(), pax);
                                 utilities.userPreferences.SaveMe();
                             }
                         }
                     }
                 }
-                //Resolve Cargo
+            }
+        }
+        public void ResolveAircraftType()
+        {
+            foreach (GetAircraftRequestResponse Request in Requests)
+            {
+                //Resolve Aircraft Type
+                if (Request.Return.AircraftZ == null)
+                {
+                    string input = Interaction.InputBox("What type of aircraft is represented by \n\""
+                        + Request.Return.Aircraft.AircraftType + "\"?",
+                        "Resolve A/C Type", "", -1, -1);
+                    AircraftZ aircraft = new AircraftZ();
+                    bool goodInput = utilities.userPreferences.AcStringToValidAC
+                        .TryGetValue(input.Trim().ToUpper(), out aircraft);
+                    if (goodInput)
+                    {
+                        Request.Return.AircraftZ = aircraft;
+                        MessageBoxResult result = MessageBox.Show("Do you want permenently map \n\""
+                           + Request.Return.Aircraft.AircraftType + "\" to " +
+                            aircraft.Type + "?", "Aircraft Type Map", MessageBoxButton.YesNo);
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            utilities.userPreferences.AcStringToValidAC
+                                .Add(Request.Return.Aircraft.Type.ToUpper().Trim(), aircraft);
+                            utilities.userPreferences.SaveMe();
+                        }
+                    }
+                    else
+                    {
+                        if (MessageBox.Show("Would you like to add " + input + "as\n" +
+                                "an aircraft type?", "Add Aircraft Type", MessageBoxButton.YesNo)
+                            == MessageBoxResult.Yes)
+                        {
+                            int pax = 0;
+                            bool isMilitary = false;
+                            while (goodInput)
+                            {
+                                string input1 = Interaction.InputBox("What is the maximum passenger capacity \n"
+                                + "for a " + input + "?",
+                                "Max Passenger Number", "", -1, -1);
+                                goodInput = Int32.TryParse(input.ToLower().Trim(), out pax);
+                                if (!goodInput)
+                                {
+                                    MessageBox.Show("Please enter an integer number for the \n" +
+                                        "Maximum number of passengers", "Enter Integer", MessageBoxButton.OK);
+                                }
+                            }
+                            if (MessageBox.Show("Is a " + input+ " a military aircraft type?",
+                                "Military Aircraft?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                            {
+                                isMilitary = true;
+                            }
+                            Request.Return.AircraftZ = new AircraftZ(input, (uint)pax, isMilitary);
+                            utilities.userPreferences.AcStringToValidAC
+                                .Add(input.Trim().ToUpper(), Request.Return.AircraftZ);
+                            utilities.userPreferences.SaveMe();
+                        }
+                        else
+                        {
+                            Request.Return.Errors.Add(ReturnErrors.INVALID_AIRCRAFT_TYPE);
+                        }
+                    }
+                }
+            }
+        }
 
+        public void ResolvePAXNumbers()
+        {
+            foreach (GetAircraftRequestResponse Request in Requests)
+            {
+                if (Request.Return.Cargo.NumberOfPassengersZ == -1)
+                {
+                    bool goodNumber = false;
+                    while (!goodNumber)
+                    {
+                        string input = Interaction.InputBox("How many passengers are represented by \n\""
+                        + Request.Return.Cargo.NumberOfPassengers + "\"?",
+                        "Resolve Passenger Number", "", -1, -1);
+                        goodNumber = Int32.TryParse(input.ToLower().Trim(), out int pax);
+                        if (goodNumber)
+                        {
+                            Request.Return.Cargo.NumberOfPassengersZ = pax;
+                            MessageBoxResult result = MessageBox.Show("Do you want permenently map \n\""
+                               + Request.Return.Cargo.NumberOfPassengers + "\" to " +
+                                pax + "?", "Pax # Map Confirmation", MessageBoxButton.YesNo);
+                            if (result == MessageBoxResult.Yes)
+                            {
+                                utilities.userPreferences.PaxStringToNum
+                                    .Add(Request.Return.Cargo.NumberOfPassengers.ToLower().Trim(), pax);
+                                utilities.userPreferences.SaveMe();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //Resolve missing country
+        public void ResloveMissingCountries()
+        {
+            foreach (GetAircraftRequestResponse Request in Requests)
+            {
+                string citizenName = null;
+                bool goodName = false;
+                while (!goodName)
+                {
+                    foreach (Itinerary leg in Request.Return.Itinerary)
+                    {
+                        citizenName = Interaction.InputBox(
+                            "What are people from " + leg.CountryName + "\n" +
+                            " referred to as?", "Citizen Type", "");
+                        goodName = MessageBox.Show("Is " + citizenName + " correct?",
+                            "Verify Input", MessageBoxButton.YesNo)
+                            == MessageBoxResult.Yes;
+                        if (citizenName != null)
+                        {
+                            utilities.userPreferences.Countries.Add(
+                                new Country(leg.CountryName, leg.CountryCode, citizenName));
+                            utilities.userPreferences.SaveMe();
+                        }
+                        else
+                        {
+                            utilities.userPreferences.Countries.Add(
+                                new Country(leg.CountryName, leg.CountryCode));
+                            utilities.userPreferences.SaveMe();
+                        }
+                    }
+                }
             }
         }
     }
