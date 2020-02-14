@@ -8,6 +8,21 @@ using System.Xml.Serialization;
 
 namespace Zandra
 {
+    [Serializable]
+    class PointNotFoundException : Exception
+    {
+        public PointNotFoundException()
+        {
+
+        }
+
+        public PointNotFoundException(string name)
+            : base(String.Format("Invalid Point Name: {0}", name))
+        {
+
+        }
+
+    }
     [Serializable()]
     [XmlRoot(ElementName = "route", Namespace = "Zandra")]
     public class Route 
@@ -17,20 +32,20 @@ namespace Zandra
             RouteLegs = new ObservableCollection<RouteLeg>();
         }
         [XmlElement(ElementName = "validFrom", Namespace = "Zandra")]
-        DateTime? ValidFrom { get; set; }
+        public DateTime? ValidFrom { get; set; }
         [XmlElement(ElementName = "validTo", Namespace = "Zandra")]
-        DateTime? ValidTo { get; set; }
+        public DateTime? ValidTo { get; set; }
         [XmlElement(ElementName = "isBlanket", Namespace = "Zandra")]
-        bool IsBlanket { get; set; }
+        public bool IsBlanket { get; set; }
         [XmlElement(ElementName = "approved", Namespace = "Zandra")]
-        bool Approved { get; set; }
+        public bool Approved { get; set; }
         [XmlElement(ElementName = "routeLegs", Namespace = "Zandra")]
-        ObservableCollection<RouteLeg> RouteLegs{ get; set; }
+        public ObservableCollection<RouteLeg> RouteLegs{ get; set; }
         [XmlElement(ElementName = "aircraft", Namespace = "Zandra")]
-        Aircraft aircraft { get; set; }
+        public Aircraft aircraft { get; set; }
         [XmlElement(ElementName = "callsign", Namespace = "Zandra")]
-        string callsign { get; set; }
+        public string callsign { get; set; }
         [XmlElement(ElementName = "containsErrors", Namespace = "Zandra")]
-        bool ContainsErrors { get; set; }
+        public bool ContainsErrors { get; set; }
     }
 }

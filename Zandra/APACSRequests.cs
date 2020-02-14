@@ -69,11 +69,11 @@ namespace Zandra
                 SetErrorFlagsByLegType(Request);
                 SetContainsInvalidLegFlag(Request);
                 SetItineraryOverlapFlag(Request);
+                FlagValidCargoStatements(Request);
                 FindEarliestReturnDates(Request);
                 ParsePassengerNumbers(Request);
                 ParseCrewNumbers(Request);
-                ParseAircraftType(Request);//
-                FlagValidCargoStatements(Request);
+                ParseAircraftType(Request);
                 SetReturnErrorFlags(Request);
             }
         }
@@ -88,7 +88,7 @@ namespace Zandra
 
                     countrySpecific = specific;
                     cargoDetail = specific.CargoDetail;
-                    cargoDetail.DescriptionHAZ = Request.Return.Cargo.Hazardous.Trim().ToUpper();
+                    cargoDetail.Description.DescriptionHazardous = Request.Return.Cargo.Hazardous.Trim().ToUpper();
                     if (Request.Return.Cargo.HazardousFormatted == "true")
                     {
                         cargoDetail.Description.HazardousFormatted = true;
@@ -112,9 +112,8 @@ namespace Zandra
 
         private void ParseAircraftType(GetAircraftRequestResponse request)
         {
-            AircraftZ aircraft = new AircraftZ();
             if (utilities.userPreferences.AcStringToValidAC
-                    .TryGetValue(request.Return.Aircraft.AircraftType, out aircraft))
+                    .TryGetValue(request.Return.Aircraft.AircraftType, out AircraftZ aircraft))
             {
                 request.Return.AircraftZ = aircraft;
             }
@@ -171,13 +170,99 @@ namespace Zandra
         {
             foreach (Itinerary leg in Request.Return.Itinerary)
             {
-                //Limit point mapping to users' local country
+                if (leg.Origination == "true") 
+                { 
+                    leg.OriginationZ = true;
+                }
+                else
+                {
+                    leg.OriginationZ = false;
+                }
+                if (leg.Destination == "true")
+                {
+                    leg.DestinationZ = true;
+                }
+                else
+                {
+                    leg.DestinationZ = false;
+                }
+                if (leg.Enroutestop == "true")
+                {
+                    leg.EnroutestopZ = true;
+                }
+                else
+                {
+                    leg.EnroutestopZ = false;
+                }
+                //Check Airfields Points
+                string substring = leg.IcaoCode.Trim().ToUpper();
+                substring = substring.Substring(1, substring.IndexOf(" "));
+                if (utilities.userPreferences.EntryToValidPoint.TryGetValue(substring, out Point point))
+                {
+                    if (!point.IsAirfield)
+                    {
+                        if (MessageBox.Show("Is " + substring + " a valid Airfield ICAO point?",
+                            "Valid Airfield Point?", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+                        {
+                            if (leg.OriginationZ == true)
+                            {
+                                leg.Errors.Add(ItineraryErrors.INVALID_TAKEOFF_POINT);
+                            }
+                            else
+                            {
+                                leg.Errors.Add(ItineraryErrors.INVALID_LANDING_POINT);
+                            }
+                        }
+                        else
+                        {
+                            if (MessageBox.Show("Would you like to add " + leg.IcaoCode + "\n"
+                                + "to the list of valid airfields?",
+                                "Add Point?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                            {
+                                Point newPoint = new Point
+                                {
+                                    IsAirfield = true
+                                };
+                                utilities.EditPoint(newPoint);
+                                if (newPoint != null)
+                                {
+                                    utilities.userPreferences.EntryToValidPoint
+                                        .Add(leg.IcaoCode.ToUpper().Trim(), newPoint);
+                                    utilities.userPreferences.SaveMe();
+                                }
+                            }
+                            else
+                            {
+                                if (leg.OriginationZ == true)
+                                {
+                                    leg.Errors.Add(ItineraryErrors.INVALID_TAKEOFF_POINT);
+                                }
+                                else
+                                {
+                                    leg.Errors.Add(ItineraryErrors.INVALID_LANDING_POINT);
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Would you like to add " + leg.IcaoCode + "\n"
+                        + "to the list of valid airfeilds?", "Add Airfield?", MessageBoxButton.YesNo);
+                    utilities.EditPoint(point);
+                    if (point != null)
+                    {
+                        utilities.userPreferences.EntryToValidPoint
+                            .Add(leg.IcaoCode.ToUpper().Trim(), point);
+                    }
+                }
+                //Limit waypoint mapping to users' local country
                 if (utilities.userPreferences.UserCountryCode == leg.CountryCode)
                 {
                     //Check Entry Points
-                    string substring = leg.EntryPoints.Trim().ToUpper();
+                    substring = leg.EntryPoints.Trim().ToUpper();
                     substring = substring.Substring(1, substring.IndexOf(" "));
-                    if (utilities.userPreferences.EntryToValidPoint.TryGetValue(substring, out Point point))
+                    if (utilities.userPreferences.EntryToValidPoint.TryGetValue(substring, out point))
                     {
                         if (!point.IsEntry)
                         {
@@ -258,73 +343,11 @@ namespace Zandra
                         }
                     }
 
-                    //Check Airfields Points
-                    substring = leg.IcaoCode.Trim().ToUpper();
-                    substring = substring.Substring(1, substring.IndexOf(" "));
-                    if (utilities.userPreferences.EntryToValidPoint.TryGetValue(substring, out point))
-                    {
-                        if (!point.IsAirfield)
-                        {
-                            if (MessageBox.Show("Is " + substring + " a valid Airfield ICAO point?",
-                                "Valid Airfield Point?", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
-                            {
-                                if (leg.Origination == "true")
-                                {
-                                    leg.Errors.Add(ItineraryErrors.INVALID_TAKEOFF_POINT);
-                                }
-                                else
-                                {
-                                    leg.Errors.Add(ItineraryErrors.INVALID_LANDING_POINT);
-                                }
-                            }
-                            else
-                            {
-                                if (MessageBox.Show("Would you like to add " + leg.IcaoCode + "\n"
-                                    + "to the list of valid airfields?",
-                                    "Add Point?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                                {
-                                    Point newPoint = new Point
-                                    {
-                                        IsAirfield = true
-                                    };
-                                    utilities.EditPoint(newPoint);
-                                    if (newPoint != null)
-                                    {
-                                        utilities.userPreferences.EntryToValidPoint
-                                            .Add(leg.IcaoCode.ToUpper().Trim(), newPoint);
-                                        utilities.userPreferences.SaveMe();
-                                    }
-                                }
-                                else
-                                {
-                                    if (leg.Origination == "true")
-                                    {
-                                        leg.Errors.Add(ItineraryErrors.INVALID_TAKEOFF_POINT);
-                                    }
-                                    else
-                                    {
-                                        leg.Errors.Add(ItineraryErrors.INVALID_LANDING_POINT);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("Would you like to add " + leg.IcaoCode + "\n"
-                            + "to the list of valid airfeilds?", "Add Airfield?", MessageBoxButton.YesNo);
-                        utilities.EditPoint(point);
-                        if (point != null)
-                        {
-                            utilities.userPreferences.EntryToValidPoint
-                                .Add(leg.IcaoCode.ToUpper().Trim(), point);
-                        }
-                    }
+                    
 
                 }
             }
         }
-        
 
         //Map Number of PAX field to integer
         private void ParsePassengerNumbers(GetAircraftRequestResponse Request)
@@ -350,7 +373,6 @@ namespace Zandra
                     Request.Return.Cargo.NumberOfPassengersZ = -1;
                 }
             }
-            //resolve pax number
         }
 
         //Map Number of crew field to integer
@@ -393,158 +415,410 @@ namespace Zandra
                     break;
                 }
             }
-            //Check for hazardous cargo text
-            if (!CheckContainsHazCargoText())
+            //Check for standard cargo statement
+            if (!(CheckCargoDiscriptionStandard(countrySpecific) &&
+                (!CheckContainsHazCargoText(countrySpecific) || 
+                CheckHAZStatementAsApprovedNoHAZ(countrySpecific))))
             {
-                if (CheckCargoDescriptionForHaz())
-                {
-                    cargoDetail.ContainsHAZ = true;
-                    cargoDetail.Errors.Add(CargoErrors.HAZERDOUS_CARGO_NOT_LISTED);
-                }
-                else
-                {
-                    cargoDetail.ContainsHAZ = false;
-                    if (CheckCargoDiscriptionStandard())
-                    {
-                        AddCargoDiscriptionToStandardList();
-                    }
-                }
+                cargoDetail.Description.CargoResolutionRequired = false;
             }
-            //Check for hazardous cargo in normal cargo description
             else
             {
-                if (CheckHAZStatementAsApprovedNoHAZ())
+                cargoDetail.Description.CargoResolutionRequired = true;
+            }
+        }
+
+        private void ResolveCargo()
+        {
+            foreach (GetAircraftRequestResponse Request in Requests)
+            {
+                CountrySpecifics countrySpecific = null;
+                CargoDetail cargoDetail = null;
+                foreach (CountrySpecifics specific in Request.Return.CountrySpecifics)
                 {
-                    if (!CheckCargoDescriptionForHaz()) 
+                    //set country specific to the user's country
+                    if (specific.CountryCode == utilities.userPreferences.UserCountryCode)
                     {
-                        cargoDetail.ContainsHAZ = false;
+                        countrySpecific = specific;
+                        cargoDetail = specific.CargoDetail;
+                        break;
                     }
-                    else if(!cargoDetail.Description.HazardousFormatted)
+                }
+                if (cargoDetail.Description.CargoResolutionRequired)
+                {
+                    //Check for hazardous cargo text
+                    if (!CheckContainsHazCargoText(countrySpecific))
                     {
-                        if (HAZCargoStatementContainsHAZCargo())
+                        if (CheckCargoDescriptionForHaz(countrySpecific))
                         {
                             cargoDetail.ContainsHAZ = true;
+                            cargoDetail.RequiresTranslation = true;
+                            cargoDetail.Errors.Add(CargoErrors.HAZERDOUS_CARGO_NOT_LISTED);
                         }
                         else
                         {
                             cargoDetail.ContainsHAZ = false;
+                            if (CheckCargoDiscriptionStandard(countrySpecific))
+                            {
+                                if (AddCargoDiscriptionToStandardList(countrySpecific))
+                                {
+                                    cargoDetail.RequiresTranslation = false;
+                                }
+                                else
+                                {
+                                    cargoDetail.RequiresTranslation = true;
+                                }
+                            }
                         }
-          
                     }
+                    //If no HAZ listed
+                    //Check for hazardous cargo in normal cargo description
                     else
                     {
-                        cargoDetail.ContainsHAZ = true;
-                    }
-                }
-            }
+                        //Check if haz Cargo stament is actually an approved no-HAZ statement
+                        if (CheckHAZStatementAsApprovedNoHAZ(countrySpecific))
+                        {
+                            //If HAZ listed is approved as no-HAZ
+                            //Check for hazardous cargo in normal cargo description
+                            if (!CheckCargoDescriptionForHaz(countrySpecific))
+                            {
+                                cargoDetail.ContainsHAZ = false;
+                            }
+                            else if (!cargoDetail.Description.HazardousFormatted)
+                            {
+                                if (HAZCargoStatementContainsHAZCargo(countrySpecific))
+                                {
+                                    cargoDetail.ContainsHAZ = true;
+                                }
+                                else
+                                {
+                                    cargoDetail.ContainsHAZ = false;
+                                }
+                            }
+                            else
+                            {
+                                cargoDetail.ContainsHAZ = true;
+                            }
+                        }
+                        else
+                        {
 
-            //Nested Function to check for standard cargo statement and no HAZ Cargo in cargo discription
-            bool CheckCargoDescriptionForHaz()
-            {
-                //Check if cargo discription is a standard statement
-                if (CheckCargoDiscriptionStandard())
-                {
-                    return false;
-                }
-                //If not ask if it contains hazardous cargo
-                else
-                {
-                    if (MessageBox.Show("Is the Cargo Discription free\n" +
-                        "of any hazardous cargo?\n" + "Cargo Discription:\n" +
-                        cargoDetail.Description.Description, "Haz-Cargo in Cargo Description?",
-                        MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes)
-                    {
-                        return false;
+                            cargoDetail.ContainsHAZ = true;
+                        }
                     }
-                    else
-                    {                 
-                        ;
-                        return true;
-                    }
-                }
-            }
-            bool CheckCargoDiscriptionStandard()
-            {
-                if (utilities.userPreferences.CargoStringToStandard.TryGetValue
-                    (cargoDetail.Description.Description.ToUpper().Trim(), out cargoDetail))
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            bool CheckContainsHazCargoText()
-            {
-                if (Request.Return.Cargo.Hazardous.Trim() == "" ||
-                Request.Return.Cargo.Hazardous.Trim() == null)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            void AddCargoDiscriptionToStandardList()
-            {
-                if(MessageBox.Show("Would you like to add this cargo discription\n" +
-                    "to the standard unrestricted list?", "Add Standard Discription?",
-                    MessageBoxButton.YesNo, MessageBoxImage.Question,
-                    MessageBoxResult.No) == MessageBoxResult.No)
-                {
-                    utilities.userPreferences.CargoStringToStandard
-                        .Add(cargoDetail.Description.Description.Trim().ToUpper(),cargoDetail);
-                }
-            }
-            bool CheckHAZStatementAsApprovedNoHAZ()
-            {
-                //Check if haz-cargo statement is an approved no-haz cargo statement
-                //check tha there is no formated Haz statement
-                if (utilities.userPreferences.NoHAZCargoStatements
-                    .Contains(Request.Return.Cargo.Hazardous.Trim().ToUpper()) &&
-                    Request.Return.Cargo.HazardousFormatted == "false")
-                {
-                    return true;
-                }
-                else 
-                { 
-                    return false; 
-                }
-            }
-            bool HAZCargoStatementContainsHAZCargo()
-            {
-                //Check if user would like to add statment as a no-haz statement
-                if (MessageBox.Show("Does this shipment Contain hazardous cargo\n" +
-                    "based on the Hazardous cargo description?" +
-                    "Hazardous Cargo Discription: \n" +
-                    cargoDetail.DescriptionHAZ,
-                    "Hazardous Cargo?", MessageBoxButton.YesNo
-                    , MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
-                {
-                    return true;
-                }
-                else
-                {
-                    AddHAZStatementToNoHAZList();
-                    return false;
-                }
-            }
-            void AddHAZStatementToNoHAZList()
-            {
-                if (MessageBox.Show("Would you like to add \"\n" +
-                   "as an approved NO-HAZARDOUS CARGO statement?",
-                   "Add No-Hazardous Statement", MessageBoxButton.YesNo,
-                   MessageBoxImage.Question, MessageBoxResult.No)
-                   == MessageBoxResult.Yes)
-                {
-                    utilities.userPreferences.NoHAZCargoStatements
-                        .Add(cargoDetail.DescriptionHAZ.Trim().ToUpper());
+                    cargoDetail.Description.CargoResolutionRequired = false;
                 }
             }
         }
 
+        bool CheckCargoDescriptionForHaz(CountrySpecifics countrySpecific)
+        {
+            CargoDetail cargoDetail = countrySpecific.CargoDetail;
+            //Check if cargo discription is a standard statement
+            if (CheckCargoDiscriptionStandard(countrySpecific))
+            {
+                return false;
+            }
+            //If not standard then ask if it contains hazardous cargo
+            else
+            {
+                if (MessageBox.Show("Is the Cargo Discription FREE\n" +
+                    "of any hazardous cargo?\n" + "Cargo Discription:\n" +
+                    cargoDetail.Description.Description, "Haz-Cargo in Cargo Description?",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes)
+                {
+                    AddCargoDiscriptionToStandardList(countrySpecific);
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+        }
+        bool CheckCargoDiscriptionStandard(CountrySpecifics countrySpecific)
+        {
+            CargoDetail cargoDetail = countrySpecific.CargoDetail;
+            if (utilities.userPreferences.CargoStringToStandard.TryGetValue
+                (cargoDetail.Description.Description.ToUpper().Trim(), out cargoDetail))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        bool CheckContainsHazCargoText(CountrySpecifics countrySpecific)
+        {
+            if (countrySpecific.CargoDetail.Description.DescriptionHazardous.Trim() == "" ||
+            countrySpecific.CargoDetail.Description.DescriptionHazardous == null)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+        bool AddCargoDiscriptionToStandardList(CountrySpecifics countrySpecific)
+        {
+            CargoDetail cargoDetail = countrySpecific.CargoDetail;
+            if (MessageBox.Show("Would you like to add this cargo discription\n" +
+                "to the standard unrestricted list?\n" +
+                "!!WARNING!!\n" +
+                "This will keep this statement\n" +
+                "from being flagged for translation.\n" +
+                "Instead it will be covered with the\n" +
+                "standard cargo template translation.\n" +
+                "Statement:" +
+                countrySpecific.CargoDetail, "Add Standard Discription?",
+                MessageBoxButton.YesNo, MessageBoxImage.Question,
+                MessageBoxResult.No) == MessageBoxResult.No)
+            {
+                if (MessageBox.Show("Are you sure you want to add this cargo discription\n" +
+                "to the standard unrestricted list?\n" +
+                "!!WARNING!!\n" +
+                "This will keep this statement\n" +
+                "from being flagged for translation.\n" +
+                "Instead it will be covered with the\n" +
+                "standard cargo template translation.\n" +
+                "Statement:" +
+                countrySpecific.CargoDetail, "Add Standard Discription?",
+                MessageBoxButton.YesNo, MessageBoxImage.Question,
+                MessageBoxResult.No) == MessageBoxResult.No)
+                {
+                    if (MessageBox.Show(
+                    "Does this cargo statement indicate a \n" +
+                    "certain number if passengers?\n" +
+                    "Cargo Statement:\n" +
+                    cargoDetail.Description.Description,
+                    "PAX number indicated?",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question,
+                    MessageBoxResult.No)
+                    == MessageBoxResult.Yes)
+                    {
+                        bool goodNumber = false;
+                        while (!goodNumber)
+                        {
+                            string input = Interaction.InputBox(
+                                "How many passengers" +
+                                " are represented by \n\""
+                            + "The Cargo Statement:\n" +
+                            cargoDetail.Description.Description,
+                            "How Man PAX?", "", -1, -1);
+                            goodNumber = Int32.TryParse(input.ToLower().Trim(), out int pax);
+                            if (goodNumber)
+                            {
+                                MessageBoxResult result = MessageBox.Show(
+                                    "Is " + pax + " correct?",
+                                    "Pax # Correct?",
+                                    MessageBoxButton.YesNoCancel,
+                                    MessageBoxImage.Question,
+                                    MessageBoxResult.Yes);
+                                if (result == MessageBoxResult.Yes)
+                                {
+                                    cargoDetail.Description.PalletNumbers = pax;
+                                }
+                                else if (result == MessageBoxResult.No)
+                                {
+                                    goodNumber = false;
+                                }
+                                else
+                                {
+                                    goodNumber = true;
+                                    cargoDetail.Description.PalletNumbers = null;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        cargoDetail.Description.PaxNumbers = null;
+                    }
+                    if (MessageBox.Show(
+                        "Does this cargo statement indicate a \n" +
+                        "certain number if pallets?\n" +
+                        "Cargo Statement:\n" +
+                        cargoDetail.Description.Description,
+                        "Pallet number indicated?",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question,
+                        MessageBoxResult.No)
+                        == MessageBoxResult.Yes)
+                    {
+                        bool goodNumber = false;
+                        while (!goodNumber)
+                        {
+                            string input = Interaction.InputBox(
+                                "How many pallets" +
+                                " are represented by \n\""
+                            + "The Cargo Statement:\n" +
+                            cargoDetail.Description.Description,
+                            "How Many Pallets?", "", -1, -1);
+                            goodNumber = Int32.TryParse(input.ToLower().Trim(), out int pallet);
+                            if (goodNumber)
+                            {
+                                MessageBoxResult result = MessageBox.Show(
+                                    "Is " + pallet + " correct?",
+                                    "Pallet # Correct?",
+                                    MessageBoxButton.YesNoCancel,
+                                    MessageBoxImage.Question,
+                                    MessageBoxResult.Yes);
+                                if (result == MessageBoxResult.Yes)
+                                {
+                                    cargoDetail.Description.PalletNumbers = pallet;
+                                }
+                                else if (result == MessageBoxResult.No)
+                                {
+                                    goodNumber = false;
+                                }
+                                else
+                                {
+                                    goodNumber = true;
+                                    cargoDetail.Description.PalletNumbers = null;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        cargoDetail.Description.PalletNumbers = null;
+                    }
+                    if (MessageBox.Show(
+                        "Does this cargo statement indicate a \n" +
+                        "certain cargo weight?\n" +
+                        "Cargo Statement:\n" +
+                        cargoDetail.Description.Description,
+                        "Weight indicated?",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question,
+                        MessageBoxResult.No)
+                        == MessageBoxResult.Yes)
+                    {
+                        bool goodNumber = false;
+                        while (!goodNumber)
+                        {
+                            string input = Interaction.InputBox(
+                                "What weight is in kgs represnted by \n\"" +
+                                "The Cargo Statement:\n" +
+                            cargoDetail.Description.Description,
+                            "How Much Weight (kgs)?", "", -1, -1);
+                            goodNumber = Int32.TryParse(input.ToLower().Trim(), out int cargoWeight);
+                            if (goodNumber)
+                            {
+                                MessageBoxResult result = MessageBox.Show(
+                                    "Is " + cargoWeight + " correct?",
+                                    "Pallet # Correct?",
+                                    MessageBoxButton.YesNoCancel,
+                                    MessageBoxImage.Question,
+                                    MessageBoxResult.Yes);
+                                if (result == MessageBoxResult.Yes)
+                                {
+                                    cargoDetail.Description.CargoWeight = cargoWeight;
+                                }
+                                else if (result == MessageBoxResult.No)
+                                {
+                                    goodNumber = false;
+                                }
+                                else
+                                {
+                                    goodNumber = true;
+                                    cargoDetail.Description.CargoWeight = null;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        cargoDetail.Description.CargoWeight = null;
+                    }
+                    utilities.userPreferences.CargoStringToStandard
+                        .Add(cargoDetail.Description.Description.Trim().ToUpper(), cargoDetail);
+                    utilities.userPreferences.SaveMe();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }       
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        bool CheckHAZStatementAsApprovedNoHAZ(CountrySpecifics countrySpecific)
+        {
+            CargoDetail cargoDetail = countrySpecific.CargoDetail;
+            //Check if haz-cargo statement is an approved no-haz cargo statement
+            //check tha there is no formated Haz statement
+            if (utilities.userPreferences.NoHAZCargoStatements
+                .Contains(countrySpecific.CargoDetail.Description.DescriptionHazardous.Trim().ToUpper()) 
+                && cargoDetail.Description.HazardousFormatted == false)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        bool HAZCargoStatementContainsHAZCargo(CountrySpecifics countrySpecific)
+        {
+            CargoDetail cargoDetail = countrySpecific.CargoDetail;
+            //Check if user would like to add statment as a no-haz statement
+            if (MessageBox.Show("Does this shipment Contain hazardous cargo\n" +
+                "based on the Hazardous cargo description?" +
+                "Hazardous Cargo Discription: \n" +
+                countrySpecific.CargoDetail.Description.DescriptionHazardous,
+                "Hazardous Cargo?", MessageBoxButton.YesNo
+                , MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+            {
+                return true;
+            }
+            else
+            {
+                AddHAZStatementToNoHAZList(countrySpecific);
+                return false;
+            }
+        }
+        bool AddHAZStatementToNoHAZList(CountrySpecifics countrySpecific)
+        {
+            CargoDetail cargoDetail = countrySpecific.CargoDetail;
+            if (MessageBox.Show("Would you like to add \"\n" +
+                countrySpecific.CargoDetail.Description.DescriptionHazardous +
+                "as an approved NO-HAZARDOUS CARGO statement?",
+                "Add No-Hazardous Statement", MessageBoxButton.YesNo,
+                MessageBoxImage.Question, MessageBoxResult.No)
+                == MessageBoxResult.Yes)
+            {
+                if (MessageBox.Show("Are you sure you want to add \"\n" +
+                    countrySpecific.CargoDetail.Description.DescriptionHazardous +
+                "? This statment will NOT be flagged\n" +
+                " as hazardous in the future " +
+                "if you choose \"yes\".",
+                "Add No-Hazardous Statement", MessageBoxButton.YesNo,
+                MessageBoxImage.Question, MessageBoxResult.No)
+                == MessageBoxResult.Yes)
+                {
+                    utilities.userPreferences.NoHAZCargoStatements
+                    .Add(countrySpecific.CargoDetail.Description.DescriptionHazardous.Trim().ToUpper());
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
         private void SetItineraryOverlapFlag(GetAircraftRequestResponse Request)
         {
             foreach (Itinerary leg in Request.Return.Itinerary)
@@ -1189,6 +1463,7 @@ namespace Zandra
                 }
             }
         }
+
         //Clear Previous Flagged Errors
         private void ClearErrors()
         {
@@ -1222,6 +1497,8 @@ namespace Zandra
             ResolveCrewNumbers();
             ResloveMissingCountries();
             ResolveAircraftType();
+            ResolveCargo();
+            
             //Resolve Cargo
             
         }

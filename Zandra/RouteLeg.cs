@@ -11,10 +11,22 @@ namespace Zandra
     [XmlRoot(ElementName = "routeLeg", Namespace = "Zandra")]
     public class RouteLeg
     {
+        public RouteLeg() { }
+        public RouteLeg(RoutePoint start, RoutePoint end) 
+        {
+            Origin = start;
+            Termination = end;
+        }
+        public RouteLeg(RoutePoint start, RoutePoint end, string approvalNumber)
+        {
+            Origin = start;
+            Termination = end;
+            ApprovalNumber = approvalNumber;
+        }
         [XmlElement(ElementName = "origin", Namespace = "Zandra")]
-        public Point Origin { get; set; }
+        public RoutePoint Origin { get; set; }
         [XmlElement(ElementName = "origin", Namespace = "Zandra")]
-        public Point Termination { get; set; }
+        public RoutePoint Termination { get; set; }
         [XmlElement(ElementName = "approvalNumber", Namespace = "Zandra")]
         public string ApprovalNumber { get; set; }
 

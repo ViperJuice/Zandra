@@ -301,8 +301,12 @@ namespace Zandra
 		public DateTime? DepartTimeZ { get; set; }
 		[XmlElement(ElementName = "destination", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
 		public string Destination { get; set; }
+		[XmlElement(ElementName = "destinationZ", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
+		public bool DestinationZ { get; set; }
 		[XmlElement(ElementName = "enroutestop", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
 		public string Enroutestop { get; set; }
+		[XmlElement(ElementName = "enroutestopZ", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
+		public bool EnroutestopZ { get; set; }
 		[XmlElement(ElementName = "entryPoints", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
 		public string EntryPoints { get; set; }
 		[XmlElement(ElementName = "exitPoints", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
@@ -327,6 +331,8 @@ namespace Zandra
 		public string NextId { get; set; }
 		[XmlElement(ElementName = "origination", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
 		public string Origination { get; set; }
+		[XmlElement(ElementName = "originationZ", Namespace = "Zandra")]
+		public bool OriginationZ { get; set; }
 		[XmlElement(ElementName = "otherLogisticalSupport", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]
 		public string OtherLogisticalSupport { get; set; }
 		[XmlElement(ElementName = "previousId", Namespace = "http://r59.aircraft.ws.apacs.xonp.gov/xsd")]

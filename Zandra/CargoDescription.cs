@@ -18,10 +18,13 @@ namespace Zandra
         [XmlElement(ElementName = "hazardousFormatted", Namespace = "Zandra")]
         public bool HazardousFormatted { get; set; }
         [XmlElement(ElementName = "paxNumbers", Namespace = "Zandra")]
-        public int PaxNumbers { get; set; }
+        public int? PaxNumbers { get; set; }
         [XmlElement(ElementName = "palletNumbers", Namespace = "Zandra")]
-        public int PalletNumbers { get; set; }
+        public int? PalletNumbers { get; set; }
         [XmlElement(ElementName = "cargoWeight", Namespace = "Zandra")]
-        public int CargoWeight { get; set; }
+        public int? CargoWeight { get; set; }
+
+        [XmlElement(ElementName = "cargoResolutionRequired", Namespace = "Zandra")]
+        public bool CargoResolutionRequired { get; set; }
     }
 }

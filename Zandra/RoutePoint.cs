@@ -10,14 +10,37 @@ namespace Zandra
 {
     [Serializable()]
     [XmlRoot(ElementName = "routePoint", Namespace = "Zandra")]
-    class RoutePoint
+    public class RoutePoint
     {
-        ObservableCollection<RoutePoint> Points { get; set; }
+        public RoutePoint() { }
+        public RoutePoint(Point point)
+        {
+            Point = point;
+            ArriveTime = null;
+            DepartTime = null;
+            FlightLevel = null;
+        }
+        public RoutePoint(Point point, DateTime? arrival, DateTime? departure, uint? FL) 
+        {
+            Point = point;
+            ArriveTime = arrival;
+            DepartTime = departure;
+            FlightLevel = FL;
+        }
+        public RoutePoint(Point point, DateTime? arrival, DateTime? departure)
+        {
+            Point = point;
+            ArriveTime = arrival;
+            DepartTime = departure;
+            FlightLevel = null;
+        }
+
+        public Point Point { get; set; }
         [XmlElement(ElementName = "arriveTime", Namespace = "Zandra")]
-        DateTime? ArriveTime { get; set; }
+        public DateTime? ArriveTime { get; set; }
         [XmlElement(ElementName = "departTime", Namespace = "Zandra")]
-        DateTime? DeparTime { get; set; }
+        public DateTime? DepartTime { get; set; }
         [XmlElement(ElementName = "flightLevel", Namespace = "Zandra")]
-        uint FlighttLevel { get; set; }
+        public uint? FlightLevel { get; set; }
     }
 }

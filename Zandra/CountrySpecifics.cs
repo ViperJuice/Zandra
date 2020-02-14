@@ -22,7 +22,9 @@ namespace Zandra
 			CargoDetail = new CargoDetail();
 			Errors = new ObservableCollection<ReturnErrors>();
 			GovClearanceStatus = new GovClearance();
+			InCountryRoute = new Route();
 			CountryCode = countryCode;
+			
 		}
 
 		[XmlElement(ElementName = "countryCode", Namespace = "Zandra")]
