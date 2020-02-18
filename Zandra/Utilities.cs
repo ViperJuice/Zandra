@@ -12,6 +12,7 @@ namespace Zandra
 {
     public class Utilities
     {
+
         public ZandraUserPreferences userPreferences;
         public Utilities()
         {
@@ -111,22 +112,40 @@ namespace Zandra
 
         public void EditPoint(Point point)
         {
-            ObservableCollection<Country> countriesMinus =
-                           new ObservableCollection<Country>(this.userPreferences.Countries
-                           .Except(point.BorderingCountries));
-            PointDisplay pointDisplay = new PointDisplay(this.userPreferences)
+            if (point == null)
+            {
+                point = new Point();
+            }
+
+            PointDisplay pointDisplay = new PointDisplay(userPreferences)
             {
                 DataContext = point
             };
+            pointDisplay.countriesMinus = new ObservableCollection<Country>(userPreferences.Countries
+                           .Except(point.BorderingCountries));
+            pointDisplay.AddButton.Click += new RoutedEventHandler((sender, e)=>   
+            {
+                Country selectedCountry = (Country)pointDisplay.CountriesGrid.SelectedItem;
+                point.BorderingCountries.Add(selectedCountry);
+                pointDisplay.countriesMinus.Remove(selectedCountry);
+            });
+            pointDisplay.SubtractButton.Click += new RoutedEventHandler((sender, e) =>
+            {
+                Country selectedCountry = (Country)pointDisplay.BorderingCountriesGrid.SelectedItem;
+                point.BorderingCountries.Remove(selectedCountry);
+                pointDisplay.countriesMinus.Add(selectedCountry);
+            });
+            pointDisplay.BorderingCountriesGrid.Items.Clear();
             pointDisplay.BorderingCountriesGrid.ItemsSource = point.BorderingCountries;
-            pointDisplay.CountriesGrid.ItemsSource = countriesMinus;
-            pointDisplay.Show();
+            pointDisplay.CountriesGrid.Items.Clear();
+            pointDisplay.CountriesGrid.ItemsSource = pointDisplay.countriesMinus;
+            pointDisplay.ShowDialog();
             if (point != null)
             {
                 //Avoid duplicate points in dictionary mapping
-                foreach (Point pnt in this.userPreferences.EntryToValidPoint.Values)
+                foreach (Point pnt in userPreferences.EntryToValidPoint.Values)
                 {
-                    if (pnt.Name == point.Name)
+                    if (pnt.ICAOName == point.ICAOName)
                     {
                         pnt.IsAirfield = point.IsAirfield;
                         pnt.IsEntry = point.IsEntry;
@@ -142,6 +161,7 @@ namespace Zandra
             ObservableCollection<Itinerary> legs = Request.Return.Itinerary;
             CountrySpecifics countrySpecific = null;
             CargoDetail cargoDetail = null;
+            ObservableCollection<RouteLeg> routLegs = countrySpecific.InCountryRoute.RouteLegs;
             foreach (CountrySpecifics specific in Request.Return.CountrySpecifics)
             {
                 //set country specific to the user's country
@@ -164,7 +184,14 @@ namespace Zandra
                             if(error == ItineraryErrors.START_OVERLAP_INTER_COUNTRY ||
                                 error == ItineraryErrors.END_OVERLAP_INTER_COUNTRY||
                                 error == ItineraryErrors.START_OVERLAP_INTRA_COUNTRY||
-                                error == ItineraryErrors.END_OVERLAP_INTRA_COUNTRY)
+                                error == ItineraryErrors.END_OVERLAP_INTRA_COUNTRY||
+                                error == ItineraryErrors.AIRFIELD_LISTED_ON_OVERFLY||
+                                error == ItineraryErrors.ITINERARY_TIME_APACS_DESTINATION_MISMATCH ||
+                                error == ItineraryErrors.ITINERARY_TIME_APACS_ENROUTESTOP_MISMATCH ||
+                                error == ItineraryErrors.ITINERARY_TIME_APACS_ORIGINATION_MISMATCH ||
+                                error == ItineraryErrors.ITINERARY_TIME_APACS_OVERFLY_MISMATCH ||
+                                error == ItineraryErrors.ITINERARY_TIME_FLIGHTTYPE_MISMATCH ||
+                                error == ItineraryErrors.ITINERARY_TIMING_MISSING)
                             {
                                 invalidItinerary = true;
                             }
@@ -186,122 +213,170 @@ namespace Zandra
             { 
                 //Sort itineraries 
                 List<Itinerary> itineraries = new List<Itinerary>(legs);
-                List<Itinerary> sortedItineraries = itineraries.OrderBy(o => o.ArriveTimeZ).ToList();
-                int index = sortedItineraries.FindIndex(o => o.ArriveTimeZ == null);
-                ListMove(sortedItineraries, index, 0);
+                List<Itinerary> sortedItineraries = itineraries.OrderBy(o => o.EarliestTimeZ).ToList();
+                //int index = sortedItineraries.FindIndex(o => o.EarliestTimeZ == null);
+                //ListMove(sortedItineraries, index, 0);
                 legs = new ObservableCollection<Itinerary>(sortedItineraries);
                 ParseLocalItineraries();//eliminate non-local itineraries except those touching country
             }
 
-            //build itinerary in APACS order despite errors
+            //build route
+            //Each point only builds legs with own itinerary info or the itinerary previous
+            //They logic only reaches back not forward to the next itinerary
             for (int i = 0; i < legs.Count();i++)
             {
+                RoutePoint legStart;
+                RoutePoint legEnd;
                 if (i == 0)
                 {
-                    //Build Leg Start Point
-                    RoutePoint legStart;
-                    RoutePoint legEnd;
-                    Point start;
-                    Point end;
-                    if (!userPreferences.EntryToValidPoint.TryGetValue(
-                            legs[i].IcaoCode.Trim().ToUpper()
-                            , out start))
+                    //is this an in country leg?
+                    if (legs[i].CountryCode == userPreferences.UserCountryCode)
                     {
-                        legStart = new RoutePoint();
-                    }
-                    else
-                    {
-                        legStart = new RoutePoint(start, legs[i+1].LandingTimeZ, legs[i+1].TakeoffTimeZ);
-                    }
-                    if (legs[i].CountryCode != userPreferences.UserCountryCode)
-                    {
-                        if (!userPreferences.EntryToValidPoint.TryGetValue(
-                            legs[i+1].EntryPoints.Trim().ToUpper()
-                            , out end))
+                        if (legs[i].FlightTypeZ == FlightType.OVERFLY)
                         {
-                            legEnd = new RoutePoint();
+                            legStart = GetRoutePoint(legs[i].EntryPoints, legs[i].ArriveTimeZ, legs[i].ArriveTimeZ);
+                            legEnd = GetRoutePoint(legs[i].ExitPoints, legs[i].DepartTimeZ, legs[i].DepartTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                        }
+                        else if (legs[i].FlightTypeZ == FlightType.INTER_COUNTRY_STOP_AND_GO ||
+                            legs[i].FlightTypeZ == FlightType.INTER_COUNTRY_TERMINATE ||
+                            legs[i].FlightTypeZ == FlightType.INTER_TO_INTRA_COUNTRY)
+                        {
+                            legStart = GetRoutePoint(legs[i].EntryPoints, legs[i].ArriveTimeZ, legs[i].ArriveTimeZ);
+                            legEnd = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                            if (legs[i].FlightTypeZ == FlightType.INTER_COUNTRY_STOP_AND_GO)
+                            {
+                                legStart = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
+                                legEnd = GetRoutePoint(legs[i].ExitPoints, legs[i].DepartTimeZ, legs[i].DepartTimeZ);
+                                routLegs.Add(new RouteLeg(legStart, legEnd));
+                            }
+                        }
+                        else if (legs[i].FlightTypeZ == FlightType.INTRA_COUNTRY_STOP_AND_GO ||
+                            legs[i].FlightTypeZ == FlightType.INTRA_COUNTRY_ORIGINATE)
+                        {
+                            //This will be handled by the next legs processing
+                        }
+                        else if (legs[i].FlightTypeZ == FlightType.INTRA_COUNTRY_TERMINATE)
+                        {
+                            legStart = GetRoutePoint(legs[i].EntryPoints, legs[i].ArriveTimeZ, legs[i].ArriveTimeZ); ;
+                            legEnd = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                        }
+                        else if (legs[i].FlightTypeZ == FlightType.INTER_COUNTRY_ORIGINATE)
+                        {
+                            legStart = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
+                            legEnd = GetRoutePoint(legs[i].ExitPoints, legs[i].DepartTimeZ, legs[i].DepartTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                        }
+                        else if (legs[i].FlightTypeZ == FlightType.INVALID_ITINERARY)
+                        {
+                            legStart = GetRoutePoint(null, null, null);
+                            legEnd = GetRoutePoint(null, null, null);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                        }
+                    }
+                    else //If an out of country leg
+                    {
+                        if (legs[i].FlightTypeZ == FlightType.OVERFLY)
+                        {
+
+                            legStart = GetRoutePoint(legs[i].EntryPoints, legs[i].ArriveTimeZ, legs[i].ArriveTimeZ);
+                            legEnd = GetRoutePoint(legs[i].ExitPoints, legs[i].DepartTimeZ, legs[i].DepartTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                        }
+                        else if (legs[i - 1].FlightTypeZ != FlightType.OVERFLY)
+                        {
+                            legStart = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
+                            legEnd = GetRoutePoint(legs[i].ExitPoints, legs[i].DepartTimeZ, legs[i].DepartTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                        }                       
+                    }
+                }
+                else //If this is not the first leg
+                {
+                    
+                    if (legs[i].CountryCode == userPreferences.UserCountryCode)
+                    {
+                        if (legs[i].FlightTypeZ == FlightType.OVERFLY)
+                        {                           
+                            legStart = GetRoutePoint(legs[i].EntryPoints, legs[i].ArriveTimeZ, legs[i].ArriveTimeZ);
+                            legEnd = GetRoutePoint(legs[i].ExitPoints, legs[i].DepartTimeZ, legs[i].DepartTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                        }
+                        else if (legs[i].FlightTypeZ == FlightType.INTER_COUNTRY_STOP_AND_GO ||
+                            legs[i].FlightTypeZ == FlightType.INTER_COUNTRY_TERMINATE ||
+                            legs[i].FlightTypeZ == FlightType.INTER_TO_INTRA_COUNTRY)
+                        {
+                            legStart = GetRoutePoint(legs[i].EntryPoints, legs[i].ArriveTimeZ, legs[i].ArriveTimeZ);
+                            legEnd = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                            if (legs[i].FlightTypeZ == FlightType.INTER_COUNTRY_STOP_AND_GO)
+                            {
+                                legStart = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
+                                legEnd = GetRoutePoint(legs[i].ExitPoints, legs[i].DepartTimeZ, legs[i].DepartTimeZ);
+                                routLegs.Add(new RouteLeg(legStart, legEnd));
+                            }
+                        }
+                        else if (legs[i].FlightTypeZ == FlightType.INTRA_COUNTRY_STOP_AND_GO)
+                        {
+                            legStart = GetRoutePoint(legs[i - 1].IcaoCode, legs[i - 1].LandingTimeZ, legs[i - 1].TakeoffTimeZ);
+                            legEnd = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                        }
+                        else if (legs[i].FlightTypeZ == FlightType.INTRA_COUNTRY_ORIGINATE)
+                        {
+                            legStart = GetRoutePoint(null, null, null);
+                            legEnd = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+
+                        }
+                        else if (legs[i].FlightTypeZ == FlightType.INTRA_COUNTRY_TERMINATE)
+                        {
+                            legStart = GetRoutePoint(legs[i - 1].IcaoCode, legs[i - 1].LandingTimeZ, legs[i - 1].TakeoffTimeZ);
+                            legEnd = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                        }
+                        else if (legs[i].FlightTypeZ == FlightType.INTER_COUNTRY_ORIGINATE)
+                        {
+                            legStart = GetRoutePoint(null, null, null);
+                            legEnd = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+
+                            legStart = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
+                            legEnd = GetRoutePoint(legs[i].ExitPoints, legs[i].DepartTimeZ, legs[i].DepartTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                        }
+                        else if (legs[i].FlightTypeZ == FlightType.INVALID_ITINERARY)
+                        {
+                            legStart = GetRoutePoint(null, null, null);
+                            legEnd = GetRoutePoint(null, null, null);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
+                        }
+                    }
+                    else//If not an intra-country leg
+                    {
+                        if (legs[i].FlightTypeZ == FlightType.OVERFLY)
+                        {
+                            legStart = GetRoutePoint(legs[i].EntryPoints, legs[i].ArriveTimeZ, legs[i].ArriveTimeZ);
+                            legEnd = GetRoutePoint(legs[i].ExitPoints, legs[i].DepartTimeZ, legs[i].DepartTimeZ);
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
                         }
                         else
                         {
-                            legEnd = new RoutePoint(end, legs[i+1].ArriveTimeZ, legs[i+1].ArriveTimeZ);
+                            if (legs[i - 1].Country.Code == userPreferences.UserCountryCode)
+                            {
+                                legStart = GetRoutePoint(legs[i - 1].IcaoCode, legs[i - 1].LandingTimeZ, legs[i - 1].TakeoffTimeZ);
+                                legEnd = GetRoutePoint(legs[i - 1].ExitPoints, legs[i - 1].DepartTimeZ, legs[i - 1].DepartTimeZ);
+                            }
+                            else
+                            {
+                                legEnd = GetRoutePoint(legs[i - 1].EntryPoints, legs[i - 1].ArriveTimeZ, legs[i - 1].ArriveTimeZ);
+                                legStart = GetRoutePoint(legs[i - 1].IcaoCode, legs[i - 1].LandingTimeZ, legs[i - 1].TakeoffTimeZ);
+                            }
+                            routLegs.Add(new RouteLeg(legStart, legEnd));
                         }
                     }
-                    else if (legs[i+1].CountryCode != userPreferences.UserCountryCode)
-                    {
-                        if (!userPreferences.EntryToValidPoint.TryGetValue(
-                            legs[i].ExitPoints.Trim().ToUpper()
-                            , out end))
-                        {
-                            legEnd = new RoutePoint();
-                        }
-                        else
-                        {
-                            legEnd = new RoutePoint(end, legs[i - 1].DepartTimeZ, legs[i - 1].DepartTimeZ);
-                        }
-                    }
-                    if(legs[i-1].ArriveTimeZ == null)
-                    {
-
-                    }
-
-                    if (!userPreferences.EntryToValidPoint.TryGetValue(
-                    legs[i-1].IcaoCode.Trim().ToUpper()
-                    , out start))
-                    {
-                        legStart = new RoutePoint();
-                    }
-                    else
-                    {
-                        legStart = new RoutePoint(start, legs[i-1].ArriveTimeZ, legs[i-1].DepartTimeZ);
-                    }
-
-                    //Build Leg End Point
-                    RoutePoint legEnd;
-                    if (!userPreferences.EntryToValidPoint.TryGetValue(
-                    legs[i].IcaoCode.Trim().ToUpper()
-                    , out Point end))
-                    {
-                        legEnd = new RoutePoint(end, legs[i].ArriveTimeZ, legs[i].DepartTimeZ);
-                    }
-                    else
-                    {
-                        legEnd = new RoutePoint(end, legs[i].ArriveTimeZ, legs[i].DepartTimeZ);
-                    }
-                    //Build and add Leg
-                    countrySpecific.InCountryRoute.RouteLegs.Add(new RouteLeg(legStart, legEnd));                                                     
-                }
-                else if(i < legs.Count()-1)
-                {
-                    //Build Leg Start Point
-                    RoutePoint legStart;
-                    if (!userPreferences.EntryToValidPoint.TryGetValue(
-                    legs[i].IcaoCode.Trim().ToUpper()
-                    , out Point start))
-                    {
-                        legStart = new RoutePoint();
-                    }
-                    else
-                    {
-                        legStart = new RoutePoint(start, legs[i].ArriveTimeZ, legs[i].DepartTimeZ);
-                    }
-                    //Build Leg End Point
-                    RoutePoint legEnd;
-                    if (!userPreferences.EntryToValidPoint.TryGetValue(
-                    legs[i+1].IcaoCode.Trim().ToUpper()
-                    , out Point end))
-                    {
-                        legEnd = new RoutePoint(end, legs[i+1].ArriveTimeZ, legs[i+1].DepartTimeZ);
-                    }
-                    else
-                    {
-                        legEnd = new RoutePoint(end, legs[i+1].ArriveTimeZ, legs[i+1].DepartTimeZ);
-                    }
-                    //Build Leg
-                    countrySpecific.InCountryRoute.RouteLegs.Add(new RouteLeg(legStart, legEnd));
-                }
-                else
-                {
-
                 }
             }
             
@@ -344,141 +419,42 @@ namespace Zandra
         public void OverallRouteBuilder(GetAircraftRequestResponse Request)
         {
             ObservableCollection<Itinerary> legs = Request.Return.Itinerary;
+            RoutePoint legStart;
+            RoutePoint legEnd;
             //Build route in APACS itinerary order despite timing discreapancies and other errors
-            if (Request.Return.Errors.Contains(ReturnErrors.CONTAINS_INVALID_ITINERARY))
+            if (!Request.Return.Errors.Contains(ReturnErrors.CONTAINS_INVALID_ITINERARY))
             {
-                
-                for (int i = 0; i < legs.Count(); i++)
+                //Sort itineraries 
+                List<Itinerary> itineraries = new List<Itinerary>(legs);
+                List<Itinerary> sortedItineraries = itineraries.OrderBy(o => o.EarliestTimeZ).ToList();
+            }
+            for (int i = 0; i < legs.Count(); i++)
+            {
+                if (i > 0)
                 {
-                    if (i > 0)
+                    //Skip Overfly Legs
+                    if (legs[i].FlightTypeZ != FlightType.OVERFLY)
                     {
                         //Build Leg Start Point
-                        RoutePoint legStart;
-                        if (!userPreferences.EntryToValidPoint.TryGetValue(
-                        legs[i - 1].IcaoCode.Trim().ToUpper()
-                        , out Point start))
-                        {
-                            legStart = new RoutePoint();
-                        }
-                        else
-                        {
-                            legStart = new RoutePoint(start, legs[i - 1].LandingTimeZ, legs[i - 1].TakeoffTimeZ);
-                        }
-                        //Build Leg End Point
-                        RoutePoint legEnd;
-                        if (!userPreferences.EntryToValidPoint.TryGetValue(
-                        legs[i].IcaoCode.Trim().ToUpper()
-                        , out Point end))
-                        {
-                            legEnd = new RoutePoint(end, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
-                        }
-                        else
-                        {
-                            legEnd = new RoutePoint(end, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
-                        }
-                        //Build and add Leg
-                        Request.Return.Route.RouteLegs.Add(new RouteLeg(legStart, legEnd));
-                    }
-                    else if (i < legs.Count() - 1)
-                    {
-                        //Build Leg Start Point
-                        RoutePoint legStart;
-                        if (!userPreferences.EntryToValidPoint.TryGetValue(
-                        legs[i].IcaoCode.Trim().ToUpper()
-                        , out Point start))
-                        {
-                            legStart = new RoutePoint();
-                        }
-                        else
-                        {
-                            legStart = new RoutePoint(start, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
-                        }
-                        //Build Leg End Point
-                        RoutePoint legEnd;
-                        if (!userPreferences.EntryToValidPoint.TryGetValue(
-                        legs[i + 1].IcaoCode.Trim().ToUpper()
-                        , out Point end))
-                        {
-                            legEnd = new RoutePoint(end, legs[i + 1].LandingTimeZ, legs[i + 1].TakeoffTimeZ);
-                        }
-                        else
-                        {
-                            legEnd = new RoutePoint(end, legs[i + 1].LandingTimeZ, legs[i + 1].TakeoffTimeZ);
-                        }
+                        legStart = GetRoutePoint(legs[i - 1].IcaoCode, legs[i - 1].LandingTimeZ, legs[i - 1].TakeoffTimeZ);
+                        legEnd = GetRoutePoint(legs[i].IcaoCode, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
                         Request.Return.Route.RouteLegs.Add(new RouteLeg(legStart, legEnd));
                     }
                 }
+            }            
+        }
+        public RoutePoint GetRoutePoint(string pointName, DateTime? arrivalTime, DateTime? departureTime)
+        {
+            if (!userPreferences.EntryToValidPoint.TryGetValue(
+                          pointName.Trim().ToUpper()
+                          , out Point point))
+            {
+                return new RoutePoint(null, arrivalTime, departureTime);
             }
-            //Build route in chronological order 
             else
             {
-                List<Itinerary> itineraries = new List<Itinerary>(legs);
-                List<Itinerary> sortedItineraries = itineraries.OrderBy(o => o.ArriveTimeZ).ToList();
-                int index  = sortedItineraries.FindIndex(o => o.ArriveTimeZ == null);
-                ListMove(sortedItineraries, index, 0);
-                legs = new ObservableCollection<Itinerary>(sortedItineraries);
-                for (int i = 0; i < legs.Count(); i++)
-                {
-                    if (i > 0)
-                    {
-                        //Build Leg Start Point
-                        RoutePoint legStart;
-                        if (!userPreferences.EntryToValidPoint.TryGetValue(
-                        legs[i-1].IcaoCode.Trim().ToUpper()
-                        , out Point start))
-                        {
-                            legStart = new RoutePoint();
-                        }
-                        else
-                        {
-                            legStart = new RoutePoint(start, legs[i - 1].LandingTimeZ, legs[i - 1].TakeoffTimeZ);
-                        }
-                        //Build Leg End Point
-                        RoutePoint legEnd;
-                        if (!userPreferences.EntryToValidPoint.TryGetValue(
-                        legs[i].IcaoCode.Trim().ToUpper()
-                        , out Point end))
-                        {
-                            legEnd = new RoutePoint(end, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
-                        }
-                        else
-                        {
-                            legEnd = new RoutePoint(end, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
-                        }
-                        //Build and add Leg
-                        Request.Return.Route.RouteLegs.Add(new RouteLeg(legStart, legEnd));
-                    }
-                    else if (i < legs.Count() - 1)
-                    {
-                        //Build Leg Start Point
-                        RoutePoint legStart;
-                        if (!userPreferences.EntryToValidPoint.TryGetValue(
-                        legs[i].IcaoCode.Trim().ToUpper()
-                        , out Point start))
-                        {
-                            legStart = new RoutePoint();
-                        }
-                        else
-                        {
-                            legStart = new RoutePoint(start, legs[i].LandingTimeZ, legs[i].TakeoffTimeZ);
-                        }
-                        //Build Leg End Point
-                        RoutePoint legEnd;
-                        if (!userPreferences.EntryToValidPoint.TryGetValue(
-                        legs[i+1].IcaoCode.Trim().ToUpper()
-                        , out Point end))
-                        {
-                            legEnd = new RoutePoint(end, legs[i + 1].LandingTimeZ, legs[i + 1].TakeoffTimeZ);
-                        }
-                        else
-                        {
-                            legEnd = new RoutePoint(end, legs[i + 1].LandingTimeZ, legs[i + 1].TakeoffTimeZ);
-                        }
-                        Request.Return.Route.RouteLegs.Add(new RouteLeg(legStart, legEnd));
-                    }
-                }
+                return new RoutePoint(point, arrivalTime, departureTime);
             }
-            
         }
         public static void ListMove<T>(List<T> list, int oldIndex, int newIndex)
         {
@@ -488,4 +464,3 @@ namespace Zandra
         }
     }
 }
-

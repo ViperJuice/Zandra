@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,6 +22,7 @@ namespace Zandra
     public partial class PointDisplay : Window
     {
         ZandraUserPreferences userPreferences;
+        public ObservableCollection<Country> countriesMinus;
         public PointDisplay(ZandraUserPreferences userPreferences)
         {
             InitializeComponent();
@@ -33,7 +35,6 @@ namespace Zandra
             {
                 PointName.Text = PointName.Text.Trim().ToUpper();
                 this.Close();
-
             }
             else
             {
@@ -44,14 +45,14 @@ namespace Zandra
 
         private void SubtractButton_Click(object sender, RoutedEventArgs e)
         {
-            BorderingCountriesGrid.Items.Remove(BorderingCountriesGrid.SelectedItem);
-            CountriesGrid.Items.Add(BorderingCountriesGrid.SelectedItem);
+            //userPreferences.Countries.Remove(BorderingCountriesGrid.SelectedItem as Country);
+            //countriesMinus.Remove(BorderingCountriesGrid.SelectedItem as Country);
         }
 
         private void AddButton_Click(object sender, RoutedEventArgs e)
         {
-            BorderingCountriesGrid.Items.Add(CountriesGrid.SelectedItem);
-            CountriesGrid.Items.Remove(CountriesGrid.SelectedItem);
+            //BorderingCountriesGrid.Items.Add(CountriesGrid.SelectedItem);
+            //CountriesGrid.Items.Remove(CountriesGrid.SelectedItem);
         }
 
         private void NotListedButton_Click(object sender, RoutedEventArgs e)

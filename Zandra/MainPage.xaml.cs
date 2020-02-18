@@ -108,11 +108,6 @@ namespace Zandra
             APACSRequestGrid.Items.Refresh();
         }
 
-        private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-
         private void Open_Click(object sender, RoutedEventArgs e)
         {
             LoadStoredRequests();
@@ -128,7 +123,8 @@ namespace Zandra
 
         private void Debug_Click(object sender, RoutedEventArgs e)
         {
-            utilities.userPreferences.SaveMe();
+            ExcelHander.ReadCountryData(utilities.userPreferences);
+            ExcelHander.ReadAirfieldData(utilities.userPreferences);
         }
     }
 }

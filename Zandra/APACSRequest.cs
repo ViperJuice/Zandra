@@ -16,6 +16,7 @@ namespace Zandra
 	}
 	public enum ItineraryErrors
 	{
+		AIRFIELD_LISTED_ON_OVERFLY,
 		ENTRY_POINT_MISSING,
 		ENTRY_TIME_MISSING,
 		EXIT_POINT_MISSING,
@@ -43,7 +44,13 @@ namespace Zandra
 		START_OVERLAP_INTRA_COUNTRY,
 		START_OVERLAP_INTER_COUNTRY,
 		END_OVERLAP_INTRA_COUNTRY,
-		END_OVERLAP_INTER_COUNTRY
+		END_OVERLAP_INTER_COUNTRY,
+		ITINERARY_TIME_FLIGHTTYPE_MISMATCH,
+		ITINERARY_TIME_APACS_ENROUTESTOP_MISMATCH,
+		ITINERARY_TIME_APACS_DESTINATION_MISMATCH,
+		ITINERARY_TIME_APACS_ORIGINATION_MISMATCH,
+		ITINERARY_TIME_APACS_OVERFLY_MISMATCH,
+		MISSING_LANDING_AIRFIELD
 	}
 
 	public enum CargoErrors
@@ -111,7 +118,9 @@ namespace Zandra
 	public enum FlightType
 	{
 		OVERFLY,
-		INTRA_COUNTRY,
+		INTRA_COUNTRY_STOP_AND_GO,
+		INTRA_COUNTRY_ORIGINATE,
+		INTRA_COUNTRY_TERMINATE,
 		INTRA_COUNTRY_TO_INTER_COUNTRY,
 		INTER_COUNTRY_TERMINATE,
 		INTER_COUNTRY_ORIGINATE,
@@ -355,6 +364,10 @@ namespace Zandra
 		public string ValidTo { get; set; }
 		[XmlElement(ElementName = "validToZ", Namespace = "Zandra")]
 		public DateTime? ValidToZ { get; set; }
+		[XmlElement(ElementName = "earliestTimeZ", Namespace = "Zandra")]
+		public DateTime? EarliestTimeZ { get; set; }
+		[XmlElement(ElementName = "latestTimeZ", Namespace = "Zandra")]
+		public DateTime? LatestTimeZ { get; set; }
 		[XmlElement(ElementName = "flightTypeZ", Namespace = "Zandra")]
 		public FlightType FlightTypeZ { get; set; }
 		[XmlElement(ElementName = "ItineraryErrors", Namespace = "Zandra")]

@@ -20,10 +20,10 @@ namespace Zandra
         //parameterless constructor to allow serialization
         private ZandraUserPreferences()
         {
+            AcStringToValidAC = new Dictionary<string, AircraftZ>();
             PaxStringToNum = new Dictionary<string, int>();
             CargoStringToStandard = new Dictionary<string, CargoDetail>();
             EntryToValidPoint = new Dictionary<string, Point>();
-            //ValidCargoStatement = new ObservableCollection<string>();
             CrewStringToNum = new Dictionary<string, int>();
             PaxStringToNumKeys = new ObservableCollection<string>(); 
             PaxStringToNumValues = new ObservableCollection<int>();
@@ -74,6 +74,8 @@ namespace Zandra
             if (CrewStringToNum == null) { PaxStringToNum = new Dictionary<string, int>(); }
             if (CargoStringToStandardKeys == null) { CargoStringToStandardKeys = new ObservableCollection<string>(); }
             if (CargoStringToStandardValues == null) { CargoStringToStandardValues = new ObservableCollection<CargoDetail>(); }
+            if (AcStringToValidACKeys == null) { AcStringToValidACKeys = new ObservableCollection<string>(); }
+            if (AcStringToValidACValues == null) { AcStringToValidACValues = new ObservableCollection<AircraftZ>(); }
             PaxStringToNum = new Dictionary<string, int>()
             {
                 {"",0},

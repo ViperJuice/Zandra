@@ -25,7 +25,7 @@ namespace Zandra
         }
         [XmlElement(ElementName = "origin", Namespace = "Zandra")]
         public RoutePoint Origin { get; set; }
-        [XmlElement(ElementName = "origin", Namespace = "Zandra")]
+        [XmlElement(ElementName = "termination", Namespace = "Zandra")]
         public RoutePoint Termination { get; set; }
         [XmlElement(ElementName = "approvalNumber", Namespace = "Zandra")]
         public string ApprovalNumber { get; set; }

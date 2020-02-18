@@ -12,7 +12,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <DataGrid x:Name="APACSRequestGrid" HorizontalAlignment="Left" VerticalAlignment="Top" SelectionChanged="DataGrid_SelectionChanged" AutoGenerateColumns="False" Height="774">
+        <DataGrid x:Name="APACSRequestGrid" HorizontalAlignment="Left" VerticalAlignment="Top" AutoGenerateColumns="False" Height="774">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Return.Id}" Header="APACS ID" />
                 <DataGridTextColumn Binding="{Binding Return.Aircraft.CallSign}" Header="Callsign" />

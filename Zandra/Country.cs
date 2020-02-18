@@ -14,14 +14,12 @@ namespace Zandra
     {
         private Country() 
         { 
-            AircraftTailPrefix = new ObservableCollection<string>(); 
         }
 
         public Country(string name, string code)
         {
             Name = name;
             Code = code;
-            AircraftTailPrefix = new ObservableCollection<string>();
         }
 
         public Country(string name, string code, string nationality)
@@ -29,29 +27,39 @@ namespace Zandra
             Name = name;
             Code = code;
             Nationality = nationality;
-            AircraftTailPrefix = new ObservableCollection<string>();
         }
 
-        public Country(string name, string code, string nationality, ObservableCollection<string> acPrefixes)
+        public Country(string name, string code, string nationality, uint countryNumber)
         {
             Name = name;
             Code = code;
             Nationality = nationality;
-            if (acPrefixes != null)
-            {
-                AircraftTailPrefix = acPrefixes;
-            }
-            else
-            {
-                AircraftTailPrefix = new ObservableCollection<string>();
-            }
+            countryNumber = ISO3116Number;
+        }
+
+        public Country(string name, string code, string nationality, string acPrefix)
+        {
+            Name = name;
+            Code = code;
+            Nationality = nationality;
+            AircraftTailPrefix = acPrefix;
+        }
+        public Country(string name, string code, string nationality, string acPrefix, uint countryNumber)
+        {
+            Name = name;
+            Code = code;
+            Nationality = nationality;
+            AircraftTailPrefix = acPrefix;
+            ISO3116Number = countryNumber;
         }
         [XmlElement(ElementName = "code", Namespace = "Zandra")]
         public string Code { get; set; }
+        [XmlElement(ElementName = "iso3116Number", Namespace = "Zandra")]
+        public uint ISO3116Number { get; set; }
         [XmlElement(ElementName = "name", Namespace = "Zandra")]
         public string Name { get; set; }
         [XmlElement(ElementName = "aircraftTailPrefix", Namespace = "Zandra")]
-        public ObservableCollection<string> AircraftTailPrefix { get; set; }
+        public string AircraftTailPrefix { get; set; }
         [XmlElement(ElementName = "nationality", Namespace = "Zandra")]
         public string Nationality { get; set; }
     }

@@ -74,7 +74,7 @@ namespace Zandra
                 ParsePassengerNumbers(Request);
                 ParseCrewNumbers(Request);
                 ParseAircraftType(Request);
-                SetReturnErrorFlags(Request);
+                //SetReturnErrorFlags(Request);
             }
         }
 
@@ -170,6 +170,8 @@ namespace Zandra
         {
             foreach (Itinerary leg in Request.Return.Itinerary)
             {
+                leg.EarliestTimeZ = FindEarliestItineraryTime(leg);
+                leg.LatestTimeZ = FindLatestItineraryTime(leg);
                 if (leg.Origination == "true") 
                 { 
                     leg.OriginationZ = true;
@@ -194,15 +196,19 @@ namespace Zandra
                 {
                     leg.EnroutestopZ = false;
                 }
+
                 //Check Airfields Points
                 string substring = leg.IcaoCode.Trim().ToUpper();
-                substring = substring.Substring(1, substring.IndexOf(" "));
+                if (substring.IndexOf(" ") >= 0)
+                {
+                    substring = substring.Substring(0, substring.IndexOf(" ")+1);
+                }
                 if (utilities.userPreferences.EntryToValidPoint.TryGetValue(substring, out Point point))
                 {
-                    if (!point.IsAirfield)
+                    if (!point.IsAirfield && point.ICAOName != null && point.ICAOName.Length>0)
                     {
                         if (MessageBox.Show("Is " + substring + " a valid Airfield ICAO point?",
-                            "Valid Airfield Point?", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+                            "Valid Airfield Point?", MessageBoxButton.YesNo) != MessageBoxResult.No)
                         {
                             if (leg.OriginationZ == true)
                             {
@@ -215,45 +221,32 @@ namespace Zandra
                         }
                         else
                         {
-                            if (MessageBox.Show("Would you like to add " + leg.IcaoCode + "\n"
-                                + "to the list of valid airfields?",
-                                "Add Point?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                            {
-                                Point newPoint = new Point
-                                {
-                                    IsAirfield = true
-                                };
-                                utilities.EditPoint(newPoint);
-                                if (newPoint != null)
-                                {
-                                    utilities.userPreferences.EntryToValidPoint
-                                        .Add(leg.IcaoCode.ToUpper().Trim(), newPoint);
-                                    utilities.userPreferences.SaveMe();
-                                }
-                            }
-                            else
-                            {
-                                if (leg.OriginationZ == true)
-                                {
-                                    leg.Errors.Add(ItineraryErrors.INVALID_TAKEOFF_POINT);
-                                }
-                                else
-                                {
-                                    leg.Errors.Add(ItineraryErrors.INVALID_LANDING_POINT);
-                                }
-                            }
+                            point.IsAirfield = true;                            
                         }
                     }
                 }
-                else
+                else if (substring != null && substring.Length > 0)
                 {
-                    MessageBox.Show("Would you like to add " + leg.IcaoCode + "\n"
-                        + "to the list of valid airfeilds?", "Add Airfield?", MessageBoxButton.YesNo);
-                    utilities.EditPoint(point);
-                    if (point != null)
+                    if(MessageBox.Show("Would you like to add " + substring + "\n"
+                        + "to the list of valid airfeilds?", "Add Airfield?", MessageBoxButton.YesNo)
+                        == MessageBoxResult.Yes)
                     {
-                        utilities.userPreferences.EntryToValidPoint
-                            .Add(leg.IcaoCode.ToUpper().Trim(), point);
+                        point = new Point
+                        {
+                            IsAirfield = true
+                        };
+                        substring = leg.IcaoCode.Trim().ToUpper();
+                        if (substring.IndexOf(" ") >= 0)
+                        {
+                            substring = substring.Substring(0, substring.IndexOf(" ")+1);
+                        }
+                        point.ICAOName = substring;
+                        utilities.EditPoint(point);
+                        if (point != null)
+                        {
+                            utilities.userPreferences.EntryToValidPoint
+                                .Add(leg.IcaoCode.ToUpper().Trim(), point);
+                        }
                     }
                 }
                 //Limit waypoint mapping to users' local country
@@ -261,10 +254,13 @@ namespace Zandra
                 {
                     //Check Entry Points
                     substring = leg.EntryPoints.Trim().ToUpper();
-                    substring = substring.Substring(1, substring.IndexOf(" "));
+                    if (substring.IndexOf(" ") >= 0)
+                    {
+                        substring = substring.Substring(0, substring.IndexOf(" ")+1);
+                    }
                     if (utilities.userPreferences.EntryToValidPoint.TryGetValue(substring, out point))
                     {
-                        if (!point.IsEntry)
+                        if (!point.IsEntry && point.ICAOName != null && point.ICAOName.Length > 0)
                         {
                             if (MessageBox.Show("Is " + substring + " a valid entry point?",
                                 "Valid Entry Point?", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
@@ -277,21 +273,27 @@ namespace Zandra
                             }
                         }
                     }
-                    else
+                    else if (substring != null && substring.Length > 0)
                     {
-                        if (MessageBox.Show("Would you like to add " + leg.EntryPoints + "\n"
+                        if (MessageBox.Show("Would you like to add " + substring + "\n"
                             + "to the list of valid entry points?",
                             "Add Point?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                         {
-                            Point newPoint = new Point
+                            point = new Point
                             {
                                 IsEntry = true
                             };
-                            utilities.EditPoint(newPoint);
-                            if (newPoint != null)
+                            substring = leg.EntryPoints.Trim().ToUpper();
+                            if (substring.IndexOf(" ") >= 0)
+                            {
+                                substring = substring.Substring(0, substring.IndexOf(" ")+1);
+                            }
+                            point.ICAOName = substring;
+                            utilities.EditPoint(point);
+                            if (point != null)
                             {
                                 utilities.userPreferences.EntryToValidPoint
-                                    .Add(leg.EntryPoints.ToUpper().Trim(), newPoint);
+                                    .Add(substring, point);
                                 utilities.userPreferences.SaveMe();
                             }
                         }
@@ -303,10 +305,13 @@ namespace Zandra
 
                     //Check Exit Points
                     substring = leg.ExitPoints.Trim().ToUpper();
-                    substring = substring.Substring(1, substring.IndexOf(" "));
+                    if (substring.IndexOf(" ") >= 0)
+                    {
+                        substring = substring.Substring(0, substring.IndexOf(" ")+1);
+                    }
                     if (utilities.userPreferences.EntryToValidPoint.TryGetValue(substring, out point))
                     {
-                        if (!point.IsExit)
+                        if (!point.IsExit && point.ICAOName != null && point.ICAOName.Length > 0)
                         {
                             if (MessageBox.Show("Is " + substring + " a valid exit point?",
                                 "Valid Exit Point?", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
@@ -319,21 +324,27 @@ namespace Zandra
                             }
                         }
                     }
-                    else
+                    else if(substring != null && substring.Length > 0)
                     {
-                        if (MessageBox.Show("Would you like to add " + leg.ExitPoints + "\n"
+                        if (MessageBox.Show("Would you like to add " + substring + "\n"
                             + "to the list of valid exit points?",
                             "Add Point?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                         {
-                            Point newPoint = new Point
+                            point = new Point
                             {
                                 IsExit = true
                             };
-                            utilities.EditPoint(newPoint);
-                            if (newPoint != null)
+                            substring = leg.ExitPoints.Trim().ToUpper();
+                            if (substring.IndexOf(" ") >= 0)
+                            {
+                                substring = substring.Substring(0, substring.IndexOf(" ")+1);
+                            }
+                            point.ICAOName = substring;
+                            utilities.EditPoint(point);
+                            if (point != null)
                             {
                                 utilities.userPreferences.EntryToValidPoint
-                                    .Add(leg.ExitPoints.ToUpper().Trim(), newPoint);
+                                    .Add(substring, point);
                                 utilities.userPreferences.SaveMe();
                             }
                         }
@@ -342,10 +353,8 @@ namespace Zandra
                             leg.Errors.Add(ItineraryErrors.INVALID_EXIT_POINT);
                         }
                     }
-
-                    
-
                 }
+                utilities.userPreferences.SaveMe();
             }
         }
 
@@ -823,14 +832,12 @@ namespace Zandra
         {
             foreach (Itinerary leg in Request.Return.Itinerary)
             {
-                DateTime? early = FindEarliestItineraryTime(leg);
-                DateTime? late = FindLatestItineraryTime(leg);
                 foreach (Itinerary leg2 in Request.Return.Itinerary)
                 {
                     if (leg != leg2)
                     {
-                        DateTime? late2 = FindLatestItineraryTime(leg2);
-                        if (early < late2)
+                        DateTime? late2 = leg2.LatestTimeZ;
+                        if (leg.EarliestTimeZ < late2)
                         {
                             if (leg.CountryCode == leg2.CountryCode)
                             {
@@ -844,9 +851,9 @@ namespace Zandra
                     }
                     if (leg != leg2)
                     {
-                        DateTime? early2 = FindEarliestItineraryTime(leg2);
+                        DateTime? early2 = leg2.EarliestTimeZ;
 
-                        if (early2 < late)
+                        if (early2 < leg.LatestTimeZ)
                         {
                             if (leg.CountryCode == leg2.CountryCode)
                             {
@@ -1175,6 +1182,31 @@ namespace Zandra
             //Sort into leg types
             foreach (Itinerary leg in Request.Return.Itinerary)
             {
+                //set leg type
+                if (leg.Origination == "true")
+                {
+                    leg.OriginationZ = true;
+                }
+                else
+                {
+                    leg.OriginationZ = false;
+                }
+                if (leg.Destination == "true")
+                {
+                    leg.DestinationZ = true;
+                }
+                else
+                {
+                    leg.DestinationZ = false;
+                }
+                if (leg.Enroutestop == "true")
+                {
+                    leg.EnroutestopZ = true;
+                }
+                else
+                {
+                    leg.EnroutestopZ = false;
+                }
                 //Sort Entry Land Exit
                 if (leg.ArriveTimeZ != null
                     & leg.LandingTimeZ != null
@@ -1199,13 +1231,24 @@ namespace Zandra
                     {
                         leg.Errors.Add(ItineraryErrors.TAKEOFF_BEFORE_LAND_INTER_COUNTRY);
                     }
-
+                    if(leg.EnroutestopZ != true)
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_APACS_ENROUTESTOP_MISMATCH);
+                    }
+                    if (leg.IcaoCode.Length ==0 || leg.IcaoCode == null)
+                    {
+                        leg.Errors.Add(ItineraryErrors.MISSING_LANDING_AIRFIELD);
+                    }
+                    if (leg.FlightType.Trim().ToUpper() == "OVERFLY")
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_FLIGHTTYPE_MISMATCH);
+                    }
                 }
                 //Sort Overfly
                 else if (leg.ArriveTimeZ != null
-                    & leg.LandingTimeZ == null
-                    & leg.TakeoffTimeZ == null
-                    & leg.DepartTimeZ != null)
+                    && leg.LandingTimeZ == null
+                    && leg.TakeoffTimeZ == null
+                    && leg.DepartTimeZ != null)
                 {
                     leg.FlightTypeZ = FlightType.OVERFLY;
                     //Set coming/going flags
@@ -1216,12 +1259,24 @@ namespace Zandra
                     {
                         leg.Errors.Add(ItineraryErrors.EXIT_BEFORE_ENTRY);
                     }
+                    if (leg.EnroutestopZ == true|| leg.OriginationZ == true|| leg.DestinationZ == true)
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_APACS_OVERFLY_MISMATCH);
+                    }
+                    if (leg.IcaoCode.Length != 0 || leg.IcaoCode != null)
+                    {
+                        leg.Errors.Add(ItineraryErrors.AIRFIELD_LISTED_ON_OVERFLY);
+                    }
+                    if (leg.FlightType.Trim().ToUpper() != "OVERFLY")
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_FLIGHTTYPE_MISMATCH);
+                    }
                 }
                 //Sort entry only
                 else if (leg.ArriveTimeZ != null
-                    & leg.LandingTimeZ != null
-                    & leg.TakeoffTimeZ == null
-                    & leg.DepartTimeZ == null)
+                    && leg.LandingTimeZ != null
+                    && leg.TakeoffTimeZ == null
+                    && leg.DepartTimeZ == null)
                 {
                     leg.FlightTypeZ = FlightType.INTER_COUNTRY_TERMINATE;
                     //Set coming/going flags
@@ -1232,6 +1287,18 @@ namespace Zandra
                     if (leg.ArriveTimeZ > leg.LandingTimeZ)
                     {
                         leg.Errors.Add(ItineraryErrors.LAND_BEFORE_ENTRY);
+                    }
+                    if (leg.DestinationZ != true)
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_APACS_DESTINATION_MISMATCH);
+                    }
+                    if (leg.IcaoCode.Length == 0 || leg.IcaoCode == null)
+                    {
+                        leg.Errors.Add(ItineraryErrors.MISSING_LANDING_AIRFIELD);
+                    }
+                    if (leg.FlightType.Trim().ToUpper() == "OVERFLY")
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_FLIGHTTYPE_MISMATCH);
                     }
                 }
 
@@ -1251,6 +1318,18 @@ namespace Zandra
                     {
                         leg.Errors.Add(ItineraryErrors.EXIT_BEFORE_TAKEOFF);
                     }
+                    if (leg.OriginationZ != true)
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_APACS_ORIGINATION_MISMATCH);
+                    }
+                    if (leg.IcaoCode.Length == 0 || leg.IcaoCode == null)
+                    {
+                        leg.Errors.Add(ItineraryErrors.MISSING_LANDING_AIRFIELD);
+                    }
+                    if (leg.FlightType.Trim().ToUpper() == "OVERFLY")
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_FLIGHTTYPE_MISMATCH);
+                    }
                 }
                 //Sort intra-country
                 else if (leg.ArriveTimeZ == null
@@ -1258,7 +1337,7 @@ namespace Zandra
                     & leg.LandingTimeZ != null
                     & leg.DepartTimeZ == null)
                 {
-                    leg.FlightTypeZ = FlightType.INTRA_COUNTRY;
+                    leg.FlightTypeZ = FlightType.INTRA_COUNTRY_STOP_AND_GO;
                     //Set coming/going flags
                     leg.ComingFromSameCountryZ = false;
                     leg.GoingToSameCountryZ = true;
@@ -1266,6 +1345,18 @@ namespace Zandra
                     if (leg.TakeoffTimeZ > leg.LandingTimeZ)
                     {
                         leg.Errors.Add(ItineraryErrors.LAND_BEFORE_TAKEOFF_INTRA_COUNTRY);
+                    }
+                    if (leg.EnroutestopZ != true)
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_APACS_DESTINATION_MISMATCH);
+                    }
+                    if (leg.IcaoCode.Length == 0 || leg.IcaoCode == null)
+                    {
+                        leg.Errors.Add(ItineraryErrors.MISSING_LANDING_AIRFIELD);
+                    }
+                    if (leg.FlightType.Trim().ToUpper() == "OVERFLY")
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_FLIGHTTYPE_MISMATCH);
                     }
                 }
 
@@ -1288,6 +1379,18 @@ namespace Zandra
                     {
                         leg.Errors.Add(ItineraryErrors.EXIT_BEFORE_TAKEOFF);
                     }
+                    if (leg.EnroutestopZ != true)
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_APACS_DESTINATION_MISMATCH);
+                    }
+                    if (leg.IcaoCode.Length == 0 || leg.IcaoCode == null)
+                    {
+                        leg.Errors.Add(ItineraryErrors.MISSING_LANDING_AIRFIELD);
+                    }
+                    if (leg.FlightType.Trim().ToUpper() == "OVERFLY")
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_FLIGHTTYPE_MISMATCH);
+                    }
                 }
 
                 //Sort land then intra-country
@@ -1308,6 +1411,18 @@ namespace Zandra
                     if (leg.ArriveTimeZ > leg.LandingTimeZ)
                     {
                         leg.Errors.Add(ItineraryErrors.LAND_BEFORE_ENTRY);
+                    }
+                    if (leg.EnroutestopZ != true)
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_APACS_DESTINATION_MISMATCH);
+                    }
+                    if (leg.IcaoCode.Length == 0 || leg.IcaoCode == null)
+                    {
+                        leg.Errors.Add(ItineraryErrors.MISSING_LANDING_AIRFIELD);
+                    }
+                    if (leg.FlightType.Trim().ToUpper() == "OVERFLY")
+                    {
+                        leg.Errors.Add(ItineraryErrors.ITINERARY_TIME_FLIGHTTYPE_MISMATCH);
                     }
                 }
                 //Sort entry only error
@@ -1330,12 +1445,10 @@ namespace Zandra
                     & leg.TakeoffTimeZ == null
                     & leg.DepartTimeZ == null)
                 {
-                    leg.FlightTypeZ = FlightType.INVALID_ITINERARY;
+                    leg.FlightTypeZ = FlightType.INTRA_COUNTRY_TERMINATE;
                     //Set coming/going flags
                     leg.ComingFromSameCountryZ = true;
                     leg.GoingToSameCountryZ = false;
-                    //Flag Missing Timing Data Error
-                    leg.Errors.Add(ItineraryErrors.TAKEOFF_OR_ENTRY_TIME_MISSING);
                 }
 
                 //Sort takeoff only error
@@ -1344,12 +1457,10 @@ namespace Zandra
                     & leg.TakeoffTimeZ != null
                     & leg.DepartTimeZ == null)
                 {
-                    leg.FlightTypeZ = FlightType.INVALID_ITINERARY;
+                    leg.FlightTypeZ = FlightType.INTER_COUNTRY_ORIGINATE;
                     //Set coming/going flags
                     leg.ComingFromSameCountryZ = true;
                     leg.GoingToSameCountryZ = false;
-                    //Flag Missing Timing Data Error
-                    leg.Errors.Add(ItineraryErrors.LAND_OR_EXIT_TIME_MISSING);
                 }
 
                 //Sort takeoff only error
