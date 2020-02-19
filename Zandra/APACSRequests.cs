@@ -208,16 +208,17 @@ namespace Zandra
                     if (!point.IsAirfield && point.ICAOName != null && point.ICAOName.Length>0)
                     {
                         if (MessageBox.Show("Is " + substring + " a valid Airfield ICAO point?",
-                            "Valid Airfield Point?", MessageBoxButton.YesNo) != MessageBoxResult.No)
+                            "Valid Airfield Point?", MessageBoxButton.YesNo) == MessageBoxResult.No)
                         {
                             if (leg.OriginationZ == true)
+
                             {
                                 leg.Errors.Add(ItineraryErrors.INVALID_TAKEOFF_POINT);
                             }
                             else
                             {
                                 leg.Errors.Add(ItineraryErrors.INVALID_LANDING_POINT);
-                            }
+                            }                                                        
                         }
                         else
                         {
@@ -227,25 +228,44 @@ namespace Zandra
                 }
                 else if (substring != null && substring.Length > 0)
                 {
-                    if(MessageBox.Show("Would you like to add " + substring + "\n"
-                        + "to the list of valid airfeilds?", "Add Airfield?", MessageBoxButton.YesNo)
-                        == MessageBoxResult.Yes)
+                    if (!utilities.userPreferences.EmptyPoints.Contains(substring))
                     {
-                        point = new Point
+                        if (MessageBox.Show("Would you like to add " + substring + "\n"
+                            + "to the list of valid airfeilds?", "Add Airfield?", MessageBoxButton.YesNo)
+                            == MessageBoxResult.Yes)
                         {
-                            IsAirfield = true
-                        };
-                        substring = leg.IcaoCode.Trim().ToUpper();
-                        if (substring.IndexOf(" ") >= 0)
-                        {
-                            substring = substring.Substring(0, substring.IndexOf(" ")+1);
+                            point = new Point
+                            {
+                                IsAirfield = true
+                            };
+                            substring = leg.IcaoCode.Trim().ToUpper();
+                            if (substring.IndexOf(" ") >= 0)
+                            {
+                                substring = substring.Substring(0, substring.IndexOf(" ") + 1);
+                            }
+                            point.ICAOName = substring;
+                            utilities.EditPoint(point);
+                            if (point != null)
+                            {
+                                utilities.userPreferences.EntryToValidPoint
+                                    .Add(leg.IcaoCode.ToUpper().Trim(), point);
+                            }
                         }
-                        point.ICAOName = substring;
-                        utilities.EditPoint(point);
-                        if (point != null)
+                        else
                         {
-                            utilities.userPreferences.EntryToValidPoint
-                                .Add(leg.IcaoCode.ToUpper().Trim(), point);
+                            if (MessageBox.Show("Is " + substring + " an empty point\n" +
+                                    "(a point that should be ignored in the future)\n" +
+                                    "Click \"No\" if this is an invalid point.\n" +
+                                    "Click \"Yes\" if this is an empty point",
+                                "Valid Airfield Point?", MessageBoxButton.YesNo, MessageBoxImage.Question
+                                , MessageBoxResult.No) == MessageBoxResult.Yes)
+                            {
+                                utilities.userPreferences.EmptyPoints.Add(substring);
+                            }
+                            else
+                            {
+                                leg.Errors.Add(ItineraryErrors.INVALID_LANDING_POINT);
+                            }
                         }
                     }
                 }
@@ -275,31 +295,46 @@ namespace Zandra
                     }
                     else if (substring != null && substring.Length > 0)
                     {
-                        if (MessageBox.Show("Would you like to add " + substring + "\n"
+                        if (!utilities.userPreferences.EmptyPoints.Contains(substring))
+                        {
+                            if (MessageBox.Show("Would you like to add " + substring + "\n"
                             + "to the list of valid entry points?",
                             "Add Point?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                        {
-                            point = new Point
                             {
-                                IsEntry = true
-                            };
-                            substring = leg.EntryPoints.Trim().ToUpper();
-                            if (substring.IndexOf(" ") >= 0)
-                            {
-                                substring = substring.Substring(0, substring.IndexOf(" ")+1);
+                                point = new Point
+                                {
+                                    IsEntry = true
+                                };
+                                substring = leg.EntryPoints.Trim().ToUpper();
+                                if (substring.IndexOf(" ") >= 0)
+                                {
+                                    substring = substring.Substring(0, substring.IndexOf(" ") + 1);
+                                }
+                                point.ICAOName = substring;
+                                utilities.EditPoint(point);
+                                if (point != null)
+                                {
+                                    utilities.userPreferences.EntryToValidPoint
+                                        .Add(substring, point);
+                                    utilities.userPreferences.SaveMe();
+                                }
                             }
-                            point.ICAOName = substring;
-                            utilities.EditPoint(point);
-                            if (point != null)
+                            else
                             {
-                                utilities.userPreferences.EntryToValidPoint
-                                    .Add(substring, point);
-                                utilities.userPreferences.SaveMe();
+                                if (MessageBox.Show("Is " + substring + " an empty point\n" +
+                                    "(a point that should be ignored in the future)\n" +
+                                    "Click \"No\" if this is an invalid point.\n" +
+                                    "Click \"Yes\" if this is an empty point",
+                                "Valid Airfield Point?", MessageBoxButton.YesNo, MessageBoxImage.Question
+                                , MessageBoxResult.No) == MessageBoxResult.Yes)
+                                {
+                                    utilities.userPreferences.EmptyPoints.Add(substring);
+                                }
+                                else
+                                {
+                                    leg.Errors.Add(ItineraryErrors.INVALID_ENTRY_POINT);
+                                }
                             }
-                        }
-                        else
-                        {
-                            leg.Errors.Add(ItineraryErrors.INVALID_ENTRY_POINT);
                         }
                     }
 
@@ -326,31 +361,46 @@ namespace Zandra
                     }
                     else if(substring != null && substring.Length > 0)
                     {
-                        if (MessageBox.Show("Would you like to add " + substring + "\n"
+                        if (!utilities.userPreferences.EmptyPoints.Contains(substring))
+                        {
+                            if (MessageBox.Show("Would you like to add " + substring + "\n"
                             + "to the list of valid exit points?",
                             "Add Point?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                        {
-                            point = new Point
                             {
-                                IsExit = true
-                            };
-                            substring = leg.ExitPoints.Trim().ToUpper();
-                            if (substring.IndexOf(" ") >= 0)
-                            {
-                                substring = substring.Substring(0, substring.IndexOf(" ")+1);
+                                point = new Point
+                                {
+                                    IsExit = true
+                                };
+                                substring = leg.ExitPoints.Trim().ToUpper();
+                                if (substring.IndexOf(" ") >= 0)
+                                {
+                                    substring = substring.Substring(0, substring.IndexOf(" ") + 1);
+                                }
+                                point.ICAOName = substring;
+                                utilities.EditPoint(point);
+                                if (point != null)
+                                {
+                                    utilities.userPreferences.EntryToValidPoint
+                                        .Add(substring, point);
+                                    utilities.userPreferences.SaveMe();
+                                }
                             }
-                            point.ICAOName = substring;
-                            utilities.EditPoint(point);
-                            if (point != null)
+                            else
                             {
-                                utilities.userPreferences.EntryToValidPoint
-                                    .Add(substring, point);
-                                utilities.userPreferences.SaveMe();
+                                if (MessageBox.Show("Is " + substring + " an empty point\n" +
+                                    "(a point that should be ignored in the future)\n" +
+                                    "Click \"No\" if this is an invalid point.\n" +
+                                    "Click \"Yes\" if this is an empty point",
+                                "Valid Airfield Point?", MessageBoxButton.YesNo, MessageBoxImage.Question
+                                , MessageBoxResult.No) == MessageBoxResult.Yes)
+                                {
+                                    utilities.userPreferences.EmptyPoints.Add(substring);
+                                }
+                                else
+                                {
+                                    leg.Errors.Add(ItineraryErrors.INVALID_EXIT_POINT);
+                                }
                             }
-                        }
-                        else
-                        {
-                            leg.Errors.Add(ItineraryErrors.INVALID_EXIT_POINT);
                         }
                     }
                 }

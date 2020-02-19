@@ -11,7 +11,7 @@
         <Button x:Name="OK" Content="OK" HorizontalAlignment="Left" Height="30" Margin="260,592,0,0" VerticalAlignment="Top" Width="95" Click="OK_Click"/>
         <CheckBox x:Name="checkBox_EntryPoit" Content="Entry Point" HorizontalAlignment="Left" Margin="162,43,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.393,-1.652" IsChecked="{Binding Path=IsEntry, Mode=TwoWay}"/>
         <CheckBox x:Name="checkBox_ExitPoint" Content="Exit Point" HorizontalAlignment="Left" Margin="266,46,0,0" VerticalAlignment="Top" IsChecked="{Binding Path=IsExit, Mode=TwoWay}"/>
-        <TextBox x:Name="PointName" HorizontalAlignment="Left" Height="23" Margin="92,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="245" Text="{Binding Path=Name, Mode=TwoWay}"/>
+        <TextBox x:Name="PointName" HorizontalAlignment="Left" Height="23" Margin="92,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="245" Text="{Binding Path=ICAOName, Mode=TwoWay}"/>
         <TextBlock x:Name="NameLabel" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Point Name" VerticalAlignment="Top" Height="23" Width="79"/>
         <TextBlock x:Name="BorderingCountriesLabel" HorizontalAlignment="Left" Height="32" Margin="145,67,0,0" TextWrapping="Wrap" Text="Bordering Countries" VerticalAlignment="Top" Width="67"/>
         <DataGrid x:Name="BorderingCountriesGrid" HorizontalAlignment="Left" Height="85" Margin="10,104,0,0" VerticalAlignment="Top" Width="345" >

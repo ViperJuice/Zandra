@@ -97,6 +97,9 @@
     <Compile Include="PointDisplay.xaml.cs">
       <DependentUpon>PointDisplay.xaml</DependentUpon>
     </Compile>
+    <Compile Include="PointsListDisplay.xaml.cs">
+      <DependentUpon>PointsListDisplay.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Route.cs" />
     <Compile Include="RouteLeg.cs" />
     <Compile Include="RoutePoint.cs" />
@@ -115,6 +118,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="PointDisplay.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PointsListDisplay.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

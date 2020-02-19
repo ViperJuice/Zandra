@@ -32,6 +32,7 @@ namespace Zandra
             CargoStringToStandardKeys = new ObservableCollection<string>();
             CargoStringToStandardValues = new ObservableCollection<CargoDetail>();
             Countries = new ObservableCollection<Country>();
+            EmptyPoints = new ObservableCollection<string>();
         }
 
         public void SaveMe()
@@ -157,6 +158,8 @@ namespace Zandra
         public string UserCountryCode { get; set; }
         [XmlElement(ElementName = "countries", Namespace = "Zandra")]
         public ObservableCollection<Country> Countries { get; set; }
+        [XmlElement(ElementName = "emptyPoints", Namespace = "Zandra")]
+        public ObservableCollection<string> EmptyPoints { get; set; }
 
         //Maps passenger number field to an integer number
         [XmlElement(ElementName = "paxStringToNumKeys", Namespace = "Zandra")]
@@ -190,7 +193,9 @@ namespace Zandra
         [XmlIgnoreAttribute()]
         public Dictionary<string, Point> EntryToValidPoint;
 
-        //Maps legitimate points to user entered point names
+
+
+        //Maps legitimate aircraft types to user entered aircraft names
         [XmlElement(ElementName = "acStringToValidACKeys", Namespace = "Zandra")]
         public ObservableCollection<string> AcStringToValidACKeys { get; set; }
         [XmlElement(ElementName = "acStringToValidACValues", Namespace = "Zandra")]
