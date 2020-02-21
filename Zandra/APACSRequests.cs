@@ -244,7 +244,7 @@ namespace Zandra
                                 substring = substring.Substring(0, substring.IndexOf(" ") + 1);
                             }
                             point.ICAOName = substring;
-                            utilities.EditPoint(point);
+                            utilities.EditPoint(utilities.userPreferences.EntryToValidPoint, substring);
                             if (point != null)
                             {
                                 utilities.userPreferences.EntryToValidPoint
@@ -311,7 +311,7 @@ namespace Zandra
                                     substring = substring.Substring(0, substring.IndexOf(" ") + 1);
                                 }
                                 point.ICAOName = substring;
-                                utilities.EditPoint(point);
+                                utilities.EditPoint(utilities.userPreferences.EntryToValidPoint, substring);
                                 if (point != null)
                                 {
                                     utilities.userPreferences.EntryToValidPoint
@@ -377,7 +377,7 @@ namespace Zandra
                                     substring = substring.Substring(0, substring.IndexOf(" ") + 1);
                                 }
                                 point.ICAOName = substring;
-                                utilities.EditPoint(point);
+                                utilities.EditPoint(utilities.userPreferences.EntryToValidPoint, substring);
                                 if (point != null)
                                 {
                                     utilities.userPreferences.EntryToValidPoint

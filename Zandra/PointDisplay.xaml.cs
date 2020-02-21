@@ -19,14 +19,17 @@ namespace Zandra
     /// <summary>
     /// Interaction logic for PointDisplay.xaml
     /// </summary>
+
     public partial class PointDisplay : Window
     {
         ZandraUserPreferences userPreferences;
         public ObservableCollection<Country> countriesMinus;
-        public PointDisplay(ZandraUserPreferences userPreferences)
+        private string key;
+        public PointDisplay(ZandraUserPreferences userPreferences, string key)
         {
             InitializeComponent();
             this.userPreferences = userPreferences;
+            this.key = key;
         }
 
         private void OK_Click(object sender, RoutedEventArgs e)
@@ -41,18 +44,6 @@ namespace Zandra
                 MessageBox.Show("Point names must have no spaces and be uppercase", 
                     "Point Name Rules", MessageBoxButton.OK);
             }
-        }
-
-        private void SubtractButton_Click(object sender, RoutedEventArgs e)
-        {
-            //userPreferences.Countries.Remove(BorderingCountriesGrid.SelectedItem as Country);
-            //countriesMinus.Remove(BorderingCountriesGrid.SelectedItem as Country);
-        }
-
-        private void AddButton_Click(object sender, RoutedEventArgs e)
-        {
-            //BorderingCountriesGrid.Items.Add(CountriesGrid.SelectedItem);
-            //CountriesGrid.Items.Remove(CountriesGrid.SelectedItem);
         }
 
         private void NotListedButton_Click(object sender, RoutedEventArgs e)
@@ -79,10 +70,10 @@ namespace Zandra
                 if (!countryAlreadyExists)
                 {
                     string nameResult = Interaction.InputBox("What is the name of \n" +
-        "the country you want to add?", "Country Code", "").Trim();
+                        "the country you want to add?", "Country Code", "").Trim();
 
                     string citizenResult = Interaction.InputBox("What nationality are citizens of this\n" +
-        "country referred referred to as?", "Country Code", "").Trim();
+                        "country referred referred to as?", "Country Code", "").Trim();
 
                     userPreferences.Countries.Add(new Country(codeResult, nameResult, citizenResult));
                 }
@@ -91,12 +82,22 @@ namespace Zandra
 
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
-            if (MessageBox.Show("Are you sure you wnt to delete this point?",
+            if (MessageBox.Show("Are you sure you want to delete this point?",
                  "Delete Point?", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
-                DataContext = null;
+                userPreferences.EntryToValidPoint.Remove(key);
                 Close();
             }
+        }
+
+        private void SubtractButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void AddButton_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

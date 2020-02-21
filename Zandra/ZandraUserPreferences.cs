@@ -18,7 +18,7 @@ namespace Zandra
         [NonSerialized()]
         public readonly Utilities utilities;
         //parameterless constructor to allow serialization
-        private ZandraUserPreferences()
+        public ZandraUserPreferences()
         {
             AcStringToValidAC = new Dictionary<string, AircraftZ>();
             PaxStringToNum = new Dictionary<string, int>();

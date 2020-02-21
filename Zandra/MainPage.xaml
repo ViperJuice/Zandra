@@ -12,7 +12,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <DataGrid x:Name="APACSRequestGrid" HorizontalAlignment="Left" VerticalAlignment="Top" AutoGenerateColumns="False" Height="774">
+        <DataGrid x:Name="APACSRequestGrid" HorizontalAlignment="Stretch" VerticalAlignment="Top" AutoGenerateColumns="False" Height="774">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Return.Id}" Header="APACS ID" />
                 <DataGridTextColumn Binding="{Binding Return.Aircraft.CallSign}" Header="Callsign" />
@@ -22,7 +22,7 @@
                 <DataGridTextColumn Binding="{Binding Return.zandraRecommendation}" Header="Recommendation" />
                 <DataGridTextColumn Binding="{Binding Return.LastModified}" Header="Last Change" />
                 <DataGridTextColumn Binding="{Binding Return.Cargo.NumberOfPassengers}" Header="Passengers" />
-                <DataGridTextColumn Binding="{Binding Return.Cargo.NumberOfPassengersZ}" Header="PassengersZ" /> 
+                <DataGridTextColumn Binding="{Binding Return.Cargo.NumberOfPassengersZ}" Header="PassengersZ" />
                 <DataGridTextColumn Binding="{Binding Return.Cargo.DistinguishedVisitors}" Header="DV" />
                 <DataGridTextColumn Binding="{Binding Return.Cargo.Discription}" Header="Discription" />
                 <DataGridTextColumn Binding="{Binding Return.Cargo.Hazardous}" Header="Hazardous" />
@@ -30,9 +30,12 @@
             </DataGrid.Columns>
         </DataGrid>
         <Button x:Name="GetAPACSData" Click = "GetAPACSData_Click" Content="Get APACS Data" Height="20" Margin="482,779,0,0" VerticalAlignment="Top" RenderTransformOrigin="-1.64,0.35" HorizontalAlignment="Left" Width="100.349"/>
-        <Button x:Name="CleanData" Content="Clean Data" Click = "CleanData_Click" HorizontalAlignment="Left" Height="20" Margin="582,779,0,0" VerticalAlignment="Top" Width="100"/>
-        <Button x:Name="Save" Content="Save" HorizontalAlignment="Left" Height="20" Margin="682,779,0,0" VerticalAlignment="Top" Width="100" Click="Save_Click"/>
-        <Button x:Name="Open" Content="Open" HorizontalAlignment="Left" Height="20" Margin="782,779,0,0" VerticalAlignment="Top" Width="100" Click="Open_Click"/>
-        <Button x:Name="Debug" Content="Button" HorizontalAlignment="Left" Height="26" Margin="345,779,0,0" VerticalAlignment="Top" Width="64" Click="Debug_Click"/>
+        <Button x:Name="CleanData" Content="Clean Data" Click = "CleanData_Click" HorizontalAlignment="Left" Height="20" Margin="582,779,0,0" VerticalAlignment="Top" Width="68"/>
+        <Button x:Name="Save" Content="Save" HorizontalAlignment="Left" Height="20" Margin="650,779,0,0" VerticalAlignment="Top" Width="37" Click="Save_Click"/>
+        <Button x:Name="Open" Content="Open" HorizontalAlignment="Left" Height="20" Margin="687,779,0,0" VerticalAlignment="Top" Width="45" Click="Open_Click"/>
+        <Button x:Name="GetAirfileds" Content="Get Airfields" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="401,779,0,6" Width="81"  Height="20" Click="GetAirfields_Click" RenderTransformOrigin="1.5,0.269"/>
+        <Button x:Name="GetCountries" Content="Get Countries" HorizontalAlignment="Left" Height="20" Margin="324,779,0,0" VerticalAlignment="Top" Width="77" Click="GetCountries_Click"/>
+        <Button x:Name="EditPoints" Content="Edit Points" HorizontalAlignment="Left" Height="20" Margin="732,779,0,0" VerticalAlignment="Top" Width="56" Click="EditPoints_Click"/>
+
     </Grid>
 </Page>

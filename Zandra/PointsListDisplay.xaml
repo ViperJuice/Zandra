@@ -7,6 +7,19 @@
         mc:Ignorable="d"
         Title="PointsListDisplay" Height="450" Width="800">
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <DataGrid x:Name="PointsGrid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Key" x:Name="KeyColumn"/>
+                <DataGridTextColumn Header="ICAO" x:Name="ICAOColumn"/>
+                <DataGridTextColumn Header="Name" x:Name="NameColumn"/>
+                <DataGridCheckBoxColumn Header="Airfield" x:Name="AirfieldColumn"/>
+                <DataGridCheckBoxColumn Header="Entry" x:Name="EntryColumn"/>
+                <DataGridCheckBoxColumn Header="Exit" x:Name="ExitColumn"/>
+                <DataGridTextColumn Header="Bordering Countries" x:Name="CountriesColumn"/>
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </Window>

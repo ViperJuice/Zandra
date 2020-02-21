@@ -110,14 +110,15 @@ namespace Zandra
             RestoreFromXML(ref me, Path.GetFullPath(@"ZandraUserPreferences.xml"));
         }
 
-        public void EditPoint(Point point)
+        public void EditPoint(Dictionary<string, Point> dict, string key)
         {
+            dict.TryGetValue(key, out Point point);
             if (point == null)
             {
                 point = new Point();
             }
 
-            PointDisplay pointDisplay = new PointDisplay(userPreferences)
+            PointDisplay pointDisplay = new PointDisplay(userPreferences, key)
             {
                 DataContext = point
             };

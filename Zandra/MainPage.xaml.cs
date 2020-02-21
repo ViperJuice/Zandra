@@ -120,11 +120,19 @@ namespace Zandra
                 Utilities.SaveToXml(Requests, System.IO.Path.GetFullPath(@".\APACSRequests.xml"));
             }
         }
-
-        private void Debug_Click(object sender, RoutedEventArgs e)
+        private void GetAirfields_Click(object sender, RoutedEventArgs e)
+        {
+            ExcelHander.ReadAirfieldData(utilities.userPreferences);
+        }
+        private void GetCountries_Click(object sender, RoutedEventArgs e)
         {
             ExcelHander.ReadCountryData(utilities.userPreferences);
-            ExcelHander.ReadAirfieldData(utilities.userPreferences);
+        }
+
+        private void EditPoints_Click(object sender, RoutedEventArgs e)
+        {
+            PointsListDisplay pointsListDisplay = new PointsListDisplay(utilities);
+            pointsListDisplay.ShowDialog();
         }
     }
 }

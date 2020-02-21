@@ -7,26 +7,36 @@
         mc:Ignorable="d"
         Title="Point Display" Height="667.759" Width="373.097">
     <Grid>
-        <CheckBox x:Name="checkBox" Content="Airfield" HorizontalAlignment="Left" Margin="50,43,0,0" VerticalAlignment="Top" IsChecked="{Binding Path=IsAirfield, Mode=TwoWay}"/>
+        <CheckBox x:Name="checkBox" Content="Airfield" HorizontalAlignment="Left" Margin="50,40,0,0" VerticalAlignment="Top" IsChecked="{Binding Path=IsAirfield, Mode=TwoWay}"/>
         <Button x:Name="OK" Content="OK" HorizontalAlignment="Left" Height="30" Margin="260,592,0,0" VerticalAlignment="Top" Width="95" Click="OK_Click"/>
-        <CheckBox x:Name="checkBox_EntryPoit" Content="Entry Point" HorizontalAlignment="Left" Margin="162,43,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.393,-1.652" IsChecked="{Binding Path=IsEntry, Mode=TwoWay}"/>
-        <CheckBox x:Name="checkBox_ExitPoint" Content="Exit Point" HorizontalAlignment="Left" Margin="266,46,0,0" VerticalAlignment="Top" IsChecked="{Binding Path=IsExit, Mode=TwoWay}"/>
-        <TextBox x:Name="PointName" HorizontalAlignment="Left" Height="23" Margin="92,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="245" Text="{Binding Path=ICAOName, Mode=TwoWay}"/>
-        <TextBlock x:Name="NameLabel" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Point Name" VerticalAlignment="Top" Height="23" Width="79"/>
-        <TextBlock x:Name="BorderingCountriesLabel" HorizontalAlignment="Left" Height="32" Margin="145,67,0,0" TextWrapping="Wrap" Text="Bordering Countries" VerticalAlignment="Top" Width="67"/>
-        <DataGrid x:Name="BorderingCountriesGrid" HorizontalAlignment="Left" Height="85" Margin="10,104,0,0" VerticalAlignment="Top" Width="345" >
+        <CheckBox x:Name="checkBox_EntryPoit" Content="Entry Point" HorizontalAlignment="Left" Margin="162,40,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.393,-1.652" IsChecked="{Binding Path=IsEntry, Mode=TwoWay}"/>
+        <CheckBox x:Name="checkBox_ExitPoint" Content="Exit Point" HorizontalAlignment="Left" Margin="266,40,0,0" VerticalAlignment="Top" IsChecked="{Binding Path=IsExit, Mode=TwoWay}"/>
+        <TextBox x:Name="ICAOName" HorizontalAlignment="Left" Height="23" Margin="92,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="245" Text="{Binding Path=ICAOName, Mode=TwoWay}"/>
+        <TextBlock x:Name="ICAOLabel" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="ICAO Code" VerticalAlignment="Top" Height="23" Width="79"/>
+        <TextBlock x:Name="BorderingCountriesLabel" HorizontalAlignment="Left" Height="32" Margin="145,95,0,0" TextWrapping="Wrap" Text="Bordering Countries" VerticalAlignment="Top" Width="67" />
+        <DataGrid x:Name="BorderingCountriesGrid" HorizontalAlignment="Left" Height="85" Margin="10,130,0,0" VerticalAlignment="Top" Width="345" RenderTransformOrigin="0.5,0.5" >
+            <DataGrid.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform/>
+                    <SkewTransform AngleX="-0.899"/>
+                    <RotateTransform/>
+                    <TranslateTransform X="0.667"/>
+                </TransformGroup>
+            </DataGrid.RenderTransform>
             <DataGridTextColumn Binding="{Binding Name}" Header="Country" />
             <DataGridTextColumn Binding="{Binding Code}" Header="Code" />
         </DataGrid>
 
-        <DataGrid x:Name="CountriesGrid" HorizontalAlignment="Left" Height="345" Margin="10,224,0,0" VerticalAlignment="Top" Width="345">
+        <DataGrid x:Name="CountriesGrid" HorizontalAlignment="Left" Height="319" Margin="10,250,0,0" VerticalAlignment="Top" Width="345">
             <DataGridTextColumn Binding="{Binding Name}" Header="Country" />
             <DataGridTextColumn Binding="{Binding Code}" Header="Code" />
         </DataGrid>
-        <Button x:Name="AddButton" Content="^" HorizontalAlignment="Left" Height="25" Margin="102,194,0,0" VerticalAlignment="Top" Width="50" Click="AddButton_Click"/>
-        <Button x:Name="SubtractButton" Content="v" HorizontalAlignment="Left" Margin="200,194,0,0" VerticalAlignment="Top" Width="50" Height="25" Click="SubtractButton_Click"/>
+        <Button x:Name="AddButton" Content="^" HorizontalAlignment="Left" Height="25" Margin="102,220,0,0" VerticalAlignment="Top" Width="50" Click="AddButton_Click"/>
+        <Button x:Name="SubtractButton" Content="v" HorizontalAlignment="Left" Margin="200,220,0,0" VerticalAlignment="Top" Width="50" Height="25" Click="SubtractButton_Click"/>
         <Button x:Name="CountryNotListed" Content="Country not Listed" HorizontalAlignment="Left" Height="30" Margin="10,592,0,0" VerticalAlignment="Top" Width="126" Click="NotListedButton_Click" RenderTransformOrigin="-0.1,0.555"/>
         <Button x:Name="DeleteButton" Content="Delete" HorizontalAlignment="Left" Height="30" Margin="141,592,0,0" VerticalAlignment="Top" Width="114" Click="DeleteButton_Click"/>
+        <TextBox x:Name="PointName" HorizontalAlignment="Left" Height="27" Margin="50,63,0,0" TextWrapping="Wrap" Text="{Binding Path=Name, Mode=TwoWay}" VerticalAlignment="Top" Width="287"/>
+        <TextBlock x:Name="NameLabel" HorizontalAlignment="Left" Height="27" Margin="10,63,0,0" TextWrapping="Wrap" Text="Name" VerticalAlignment="Top" Width="77"/>
     </Grid>
 
 </Window>
